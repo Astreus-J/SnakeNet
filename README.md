@@ -12,7 +12,7 @@ Trabalho de *Fundamentos de Redes de Computadores* — "Desenvolvimento de Aplic
 
 ## 1. The problem and the solution
 **Problem:** several people on different machines want to play in the *same* real-time world, which needs low-latency communication between processes and one consistent view of the game.
-**Solution:** a **server** process owns the world (authoritative) and simulates 12 steps/s; each **client** process sends only keyboard *inputs* and renders the *snapshots* it receives. Eating food grows the snake and raises the score; hitting a wall or a snake body kills; a leaderboard ranks players.
+**Solution:** a **server** process owns the world (authoritative) and simulates 8 steps/s; each **client** process sends only keyboard *inputs* and renders the *snapshots* it receives. Eating food grows the snake and raises the score; hitting a wall or a snake body kills; a leaderboard ranks players.
 (*PT:* o servidor decide tudo; o cliente só envia teclas e desenha o estado recebido.)
 
 ## 2. Architecture
@@ -21,7 +21,7 @@ Diagram and sequence: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (Mermaid,
 ```
  client A ──UDP──┐                         ┌── server/app.py  (socket bind, recv → validate → dispatch)
  client B ──UDP──┼──►  <SERVER_IP>:5000 ───┤── server/sessions.py (token + address, rate limit)
- client C ──UDP──┘   ◄── STATE @ 12 Hz ────└── game/world.py   (authoritative simulation)
+ client C ──UDP──┘   ◄── STATE @ 8 Hz ────└── game/world.py   (authoritative simulation)
 ```
 * **Processes:** `snakenet.server` (1 per match) and `snakenet.client` / `snakenet.client.bot` (N).
 * **Server:** binds UDP, validates every datagram, keeps sessions, simulates, broadcasts `STATE`, expires idle sessions.
@@ -29,7 +29,7 @@ Diagram and sequence: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (Mermaid,
 * **Layout:** `snakenet/protocol/` (wire contract) · `game/` (pure rules) · `server/` · `client/` · `tests/` mirrors it · `docs/` · `tools/` · `evidence/`.
 
 ## 3. Transport: UDP — and why
-Chosen: **UDP** (`SOCK_DGRAM`). Real-time state is *replaceable*: the next snapshot (≈83 ms later) makes a lost one irrelevant, so TCP's retransmission and in-order delivery would only add **head-of-line blocking** and latency. UDP also needs no handshake and preserves message boundaries (one datagram = one message). We add only the reliability that matters (sequence numbers, bounded JOIN retries, idempotent control messages, timeouts) — see [PROTOCOL.md §6](docs/PROTOCOL.md).
+Chosen: **UDP** (`SOCK_DGRAM`). Real-time state is *replaceable*: the next snapshot (≈125 ms later) makes a lost one irrelevant, so TCP's retransmission and in-order delivery would only add **head-of-line blocking** and latency. UDP also needs no handshake and preserves message boundaries (one datagram = one message). We add only the reliability that matters (sequence numbers, bounded JOIN retries, idempotent control messages, timeouts) — see [PROTOCOL.md §6](docs/PROTOCOL.md).
 **If TCP were used instead:** we would need explicit message framing (length prefix) on a byte stream, one connection per player with a 3-way handshake, the kernel would retransmit stale positions and stall newer ones behind a lost segment, and Nagle/`TCP_NODELAY` tuning would be needed. TCP would be the right choice for login, chat or file transfer. Details in [docs/PRESENTATION.md](docs/PRESENTATION.md).
 UDP is **not** reliable or ordered; limitations are listed in §10.
 
@@ -38,7 +38,7 @@ UDP is **not** reliable or ordered; limitations are listed in §10.
 |---|---|---|
 | Address | `--host` (default `127.0.0.1`; `0.0.0.0` = all interfaces) or env `SNAKENET_HOST` | `--host` (server's IP or name) or `SNAKENET_HOST` |
 | Port | `--port` (default **UDP 5000**) or env `SNAKENET_PORT` | `--port` |
-Other server options: `--tick-rate` (12), `--snapshot-rate` (12), `--session-timeout` (5 s, ≥ 0.5), `--max-players` (8), `--seed`. Limits live in `snakenet/config.py` and `snakenet/protocol/limits.py`.
+Other server options: `--tick-rate` (8, higher = faster snakes), `--snapshot-rate` (8), `--session-timeout` (5 s, ≥ 0.5), `--max-players` (8), `--seed`. Limits live in `snakenet/config.py` and `snakenet/protocol/limits.py`.
 
 ## 5. Application protocol and messages
 Full specification (fields, validation, errors, examples): **[docs/PROTOCOL.md](docs/PROTOCOL.md)**. One UTF-8 JSON object per datagram: `{"v":1,"t":"<TYPE>",...}`.
@@ -56,7 +56,7 @@ Full specification (fields, validation, errors, examples): **[docs/PROTOCOL.md](
 Examples:
 ```json
 {"v":1,"t":"JOIN","name":"ana"}
-{"v":1,"t":"WELCOME","pid":1,"tok":"9f2c4a1b7e0d5c33","w":60,"h":40,"tick_rate":12.0,"timeout":5.0}
+{"v":1,"t":"WELCOME","pid":1,"tok":"9f2c4a1b7e0d5c33","w":60,"h":40,"tick_rate":8.0,"timeout":5.0}
 {"v":1,"t":"INPUT","tok":"9f2c4a1b7e0d5c33","seq":17,"dir":"U"}
 {"v":1,"t":"ERROR","code":"BAD_FIELD","msg":"INPUT.dir: expected one of ('U', 'D', 'L', 'R')","ref":"INPUT"}
 ```

@@ -17,7 +17,7 @@ flowchart LR
     SS(("UDP socket<br/>bound IP:PORT"))
     LOOP["server/app.py<br/>single loop:<br/>recv → protocol.decode → validate"]
     SESS["server/sessions.py<br/>token + address + rate limit"]
-    WORLD["game/world.py World<br/>authoritative state<br/>fixed tick 12 Hz"]
+    WORLD["game/world.py World<br/>authoritative state<br/>fixed tick 8 Hz"]
     SS --> LOOP --> SESS --> WORLD
     WORLD -->|"snapshot every tick"| LOOP --> SS
   end
@@ -38,7 +38,7 @@ sequenceDiagram
   loop every key press
     C->>S: INPUT {tok, seq, dir} (x2, same seq)
   end
-  loop every tick (12 Hz)
+  loop every tick (8 Hz)
     Note over S: validate inputs, move, eat, collide, score
     S-->>C: STATE {seq, snakes, food}
   end

@@ -15,8 +15,8 @@ def _env(name: str, default: str) -> str:
 class ServerConfig:
     host: str = "127.0.0.1"      # use 0.0.0.0 to accept LAN clients
     port: int = DEFAULT_PORT
-    tick_rate: float = 12.0      # simulation steps per second (fixed timestep)
-    snapshot_rate: float = 12.0  # STATE snapshots per second (<= tick_rate)
+    tick_rate: float = 8.0       # simulation steps per second (fixed timestep)
+    snapshot_rate: float = 8.0   # STATE snapshots per second (<= tick_rate)
     session_timeout: float = 5.0  # seconds of silence before a session is expired
     max_players: int = 8
     width: int = 60

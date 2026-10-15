@@ -226,4 +226,4 @@ def test_server_keeps_ticking_with_many_clients(server, client_factory):
         for c in clients:
             c.msg("PING", tok=c.tok, seq=1, ts=0.0)
         server.pump(0.01)
-    assert server.world.tick - start_tick >= 4  # ~12 Hz * 0.5 s, not starved by traffic
+    assert server.world.tick - start_tick >= 3  # ~8 Hz * 0.5 s, not starved by traffic

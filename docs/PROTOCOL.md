@@ -45,7 +45,7 @@ Server: creates a session (new `pid`, random `tok`) and replies `WELCOME`; if th
 session the same `WELCOME` is re-sent (**idempotent**, no duplicate player). Full match → `ERROR SERVER_FULL`.
 
 ### WELCOME (S→C)
-`{"v":1,"t":"WELCOME","pid":3,"tok":"9f2c4a1b7e0d5c33","w":60,"h":40,"tick_rate":12,"timeout":5}`
+`{"v":1,"t":"WELCOME","pid":3,"tok":"9f2c4a1b7e0d5c33","w":60,"h":40,"tick_rate":8,"timeout":5}`
 `pid` is the player id, `tok` must accompany every later client message, `w`/`h` arena size in cells,
 `timeout` tells the client how fast it must send keep-alives (it pings every `timeout/3`).
 
@@ -66,7 +66,7 @@ duplicate. A reversal (e.g. `L` while moving `R`) is validated and ignored. Clie
 `seq` is the snapshot counter (strictly increasing), `tick` the simulation tick. Per snake: `id`, `n` name,
 `c` colour index, `a` alive(0/1), `s` score; if alive also `x`,`y` (head cell) and `d` (one `U/D/L/R` per step
 from each segment to the next, towards the tail — so the body length is `len(d)+1`). Sent to every session at
-`snapshot_rate` (default 12 Hz). The same bytes go to all clients.
+`snapshot_rate` (default 8 Hz). The same bytes go to all clients.
 **Client rule:** discard a STATE whose `seq` ≤ the highest `seq` already applied (stale/reordered). Lost
 snapshots are *not* retransmitted; the next one supersedes them.
 

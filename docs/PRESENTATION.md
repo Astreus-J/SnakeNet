@@ -8,7 +8,7 @@
 | 4 | 1:30 | Why UDP (vs TCP) | Next section. |
 | 5 | 1:30 | Application protocol | [PROTOCOL.md](PROTOCOL.md): JSON envelope `{v,t,...}`; JOIN/WELCOME/INPUT/STATE/PING/PONG/LEAVE/ERROR; seq numbers; validation. |
 | 6 | 2:00 | Live demo | Server + 2–3 clients (one human, bots). Eat, grow, die, leaderboard. Kill the server → client shows *connection lost*; restart → R reconnects. Send junk with `nc -u` → server survives. |
-| 7 | 1:00 | Wireshark | Open the real capture: UDP, ports, `JOIN`, repeating `INPUT` pairs, 12 Hz `STATE`, `ERROR`. (Must be your own capture – see [WIRESHARK.md](WIRESHARK.md).) |
+| 7 | 1:00 | Wireshark | Open the real capture: UDP, ports, `JOIN`, repeating `INPUT` pairs, 8 Hz `STATE`, `ERROR`. (Must be your own capture – see [WIRESHARK.md](WIRESHARK.md).) |
 | 8 | 0:30 | Errors and conclusion | Table of failure → handling; limitations; what we learned. |
 
 ## UDP vs TCP (talking points)
@@ -28,7 +28,7 @@
 | What is a socket? | The OS endpoint for a process, identified by protocol + local IP + port. |
 | Why does the client not bind to a port? | The OS assigns an ephemeral source port on first `sendto`; the server replies to that address. |
 | IP vs port? | IP selects the host (network layer); port selects the process on it (transport layer). |
-| What if a `STATE` is lost? | Nothing: the next arrives in ~83 ms and carries the full world. |
+| What if a `STATE` is lost? | Nothing: the next arrives in ~125 ms and carries the full world. |
 | What if `JOIN` or its `WELCOME` is lost? | Client retries (5 × 0.5 s); server answers a repeated JOIN with the same `WELCOME`, so no duplicate player. Else *server unavailable*. |
 | Why must the server be authoritative? | Clients can lie or lag; the server validates inputs and decides outcomes, so all clients converge on one state. |
 | Why send input twice? | Cheap loss insurance; same `seq` so the server ignores the copy. |
