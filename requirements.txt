@@ -1,0 +1,3 @@
+# pygame-ce is the maintained fork of pygame and keeps the same `import pygame` API.
+# (The pygame 2.6.1 wheel for Python 3.14 shipped without its font module.)
+pygame-ce>=2.5

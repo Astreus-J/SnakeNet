@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+# Secrets / local config
+.env
+.env.*
+!.env.example
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+# Scratch output (keep evidence/ captures and screenshots, which are deliberate)
+*.log
