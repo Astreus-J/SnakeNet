@@ -1,59 +1,61 @@
 # SnakeNet
 
-Original desktop multiplayer snake arena built on **raw UDP sockets** (Python `socket` + pygame).
+Arena multiplayer de cobrinhas para desktop, original, construída sobre **sockets UDP puros** (`socket` do Python + pygame).
 Trabalho de *Fundamentos de Redes de Computadores* — "Desenvolvimento de Aplicação em Rede utilizando Sockets" (entrega: 28/10/2026).
 
-## Team / Integrantes
-| Name | Role |
+## Integrantes
+| Nome | Papel |
 |---|---|
 | _[TODO: nome 1]_ | _[TODO]_ |
 | _[TODO: nome 2]_ | _[TODO]_ |
 | _[TODO: nome 3]_ | _[TODO]_ |
 
-## 1. The problem and the solution
-**Problem:** several people on different machines want to play in the *same* real-time world, which needs low-latency communication between processes and one consistent view of the game.
-**Solution:** a **server** process owns the world (authoritative) and simulates 8 steps/s; each **client** process sends only keyboard *inputs* and renders the *snapshots* it receives. Eating food grows the snake and raises the score; hitting a wall or a snake body kills; a leaderboard ranks players.
-(*PT:* o servidor decide tudo; o cliente só envia teclas e desenha o estado recebido.)
+## 1. Problema e solução
+**Problema:** várias pessoas, em máquinas diferentes, querem jogar no *mesmo* mundo em tempo real. Isso exige comunicação de baixa latência entre processos e uma visão única e consistente do jogo.
+**Solução:** um processo **servidor** é dono do mundo (autoritativo) e simula 8 passos por segundo. Cada processo **cliente** envia apenas as *teclas* do jogador e desenha os *snapshots* (fotografias do estado) que recebe. Comer comida aumenta a cobra e a pontuação; bater na parede ou no corpo de uma cobra mata; um placar ordena os jogadores.
 
-## 2. Architecture
-Diagram and sequence: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (Mermaid, renders on GitHub/VS Code).
+## 2. Arquitetura
+Diagrama e diagrama de sequência: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** (Mermaid, renderiza no GitHub e no VS Code).
 
 ```
- client A ──UDP──┐                         ┌── server/app.py  (socket bind, recv → validate → dispatch)
- client B ──UDP──┼──►  <SERVER_IP>:5000 ───┤── server/sessions.py (token + address, rate limit)
- client C ──UDP──┘   ◄── STATE @ 8 Hz ────└── game/world.py   (authoritative simulation)
+ cliente A ──UDP──┐                         ┌── server/app.py      (bind do socket, recv → valida → despacha)
+ cliente B ──UDP──┼──►  <IP_SERVIDOR>:5000 ─┤── server/sessions.py (token + endereço, limite de taxa)
+ cliente C ──UDP──┘   ◄── STATE a 8 Hz ─────└── game/world.py       (simulação autoritativa)
 ```
-* **Processes:** `snakenet.server` (1 per match) and `snakenet.client` / `snakenet.client.bot` (N).
-* **Server:** binds UDP, validates every datagram, keeps sessions, simulates, broadcasts `STATE`, expires idle sessions.
-* **Client:** own UDP socket + network thread (never blocks rendering), JOIN with retries, sends inputs, drops stale snapshots, shows connection status.
-* **Layout:** `snakenet/protocol/` (wire contract) · `game/` (pure rules) · `server/` · `client/` · `tests/` mirrors it · `docs/` · `tools/` · `evidence/`.
+* **Processos:** `snakenet.server` (1 por partida) e `snakenet.client` / `snakenet.client.bot` (N).
+* **Servidor:** faz o bind do UDP, valida todo datagrama, mantém as sessões, simula o jogo, envia `STATE` a todos e expira sessões inativas.
+* **Cliente:** socket UDP próprio + thread de rede (nunca trava o desenho), JOIN com retentativas, envia as teclas, descarta snapshots antigos e mostra o estado da conexão.
+* **Organização:** `snakenet/protocol/` (contrato das mensagens) · `game/` (regras puras) · `server/` · `client/` · `tests/` (espelha os pacotes) · `docs/` · `tools/` · `evidence/`.
 
-## 3. Transport: UDP — and why
-Chosen: **UDP** (`SOCK_DGRAM`). Real-time state is *replaceable*: the next snapshot (≈125 ms later) makes a lost one irrelevant, so TCP's retransmission and in-order delivery would only add **head-of-line blocking** and latency. UDP also needs no handshake and preserves message boundaries (one datagram = one message). We add only the reliability that matters (sequence numbers, bounded JOIN retries, idempotent control messages, timeouts) — see [PROTOCOL.md §6](docs/PROTOCOL.md).
-**If TCP were used instead:** we would need explicit message framing (length prefix) on a byte stream, one connection per player with a 3-way handshake, the kernel would retransmit stale positions and stall newer ones behind a lost segment, and Nagle/`TCP_NODELAY` tuning would be needed. TCP would be the right choice for login, chat or file transfer. Details in [docs/PRESENTATION.md](docs/PRESENTATION.md).
-UDP is **not** reliable or ordered; limitations are listed in §10.
+## 3. Transporte: UDP — e por quê
+Escolhido: **UDP** (`SOCK_DGRAM`). O estado de um jogo em tempo real é *substituível*: o próximo snapshot (≈125 ms depois) torna irrelevante o que se perdeu. A retransmissão e a entrega em ordem do TCP só adicionariam **bloqueio de cabeça de fila** (*head-of-line blocking*) e latência. O UDP também não tem handshake e preserva as fronteiras das mensagens (um datagrama = uma mensagem). Acrescentamos só a confiabilidade que importa (números de sequência, retentativas limitadas de JOIN, mensagens de controle idempotentes e timeouts) — veja [PROTOCOL.md §6](docs/PROTOCOL.md).
 
-## 4. IP address and port (configurable)
-| Setting | Server | Client |
+**Se fosse TCP:** seria preciso enquadrar as mensagens manualmente (prefixo de tamanho) sobre um fluxo de bytes; haveria uma conexão por jogador, com handshake de 3 vias; o kernel retransmitiria posições velhas e seguraria as novas atrás de um segmento perdido; e seria necessário ajustar Nagle / `TCP_NODELAY`. O TCP seria a escolha certa para login, chat ou transferência de arquivos. Detalhes em [docs/PRESENTATION.md](docs/PRESENTATION.md).
+
+O UDP **não** é confiável nem ordenado; as limitações estão na seção 10.
+
+## 4. Endereço IP e porta (configuráveis)
+| Opção | Servidor | Cliente |
 |---|---|---|
-| Address | `--host` (default `127.0.0.1`; `0.0.0.0` = all interfaces) or env `SNAKENET_HOST` | `--host` (server's IP or name) or `SNAKENET_HOST` |
-| Port | `--port` (default **UDP 5000**) or env `SNAKENET_PORT` | `--port` |
-Other server options: `--tick-rate` (8, higher = faster snakes), `--snapshot-rate` (8), `--session-timeout` (5 s, ≥ 0.5), `--max-players` (8), `--seed`. Limits live in `snakenet/config.py` and `snakenet/protocol/limits.py`.
+| Endereço | `--host` (padrão `127.0.0.1`; `0.0.0.0` = todas as interfaces) ou variável `SNAKENET_HOST` | `--host` (IP ou nome do servidor) ou `SNAKENET_HOST` |
+| Porta | `--port` (padrão **UDP 5000**) ou variável `SNAKENET_PORT` | `--port` |
 
-## 5. Application protocol and messages
-Full specification (fields, validation, errors, examples): **[docs/PROTOCOL.md](docs/PROTOCOL.md)**. One UTF-8 JSON object per datagram: `{"v":1,"t":"<TYPE>",...}`.
+Outras opções do servidor: `--tick-rate` (8; maior = cobras mais rápidas), `--snapshot-rate` (8), `--session-timeout` (5 s, mínimo 0,5), `--max-players` (8), `--seed`. Os limites ficam em `snakenet/config.py` e `snakenet/protocol/limits.py`.
 
-| Type | Dir | Purpose |
+## 5. Protocolo da aplicação e mensagens
+Especificação completa (campos, validação, erros, exemplos): **[docs/PROTOCOL.md](docs/PROTOCOL.md)**. Um objeto JSON UTF-8 por datagrama: `{"v":1,"t":"<TIPO>",...}`.
+
+| Tipo | Sentido | Finalidade |
 |---|---|---|
-| `JOIN` | C→S | request to enter the match |
-| `WELCOME` | S→C | admission: `pid`, session `tok`, arena size |
-| `INPUT` | C→S | direction `U/D/L/R` + sequence number |
-| `STATE` | S→C | authoritative snapshot (snakes, food, scores), `seq` for staleness |
-| `PING` / `PONG` | C→S / S→C | keep-alive and RTT |
-| `LEAVE` | C→S | leave (idempotent) |
-| `ERROR` | S→C | structured error `code` + `msg` |
+| `JOIN` | C→S | pedido para entrar na partida |
+| `WELCOME` | S→C | admissão: `pid`, `tok` da sessão, tamanho da arena |
+| `INPUT` | C→S | direção `U/D/L/R` + número de sequência |
+| `STATE` | S→C | snapshot autoritativo (cobras, comida, pontos), com `seq` para detectar antigos |
+| `PING` / `PONG` | C→S / S→C | keep-alive e medição de RTT |
+| `LEAVE` | C→S | sair (idempotente) |
+| `ERROR` | S→C | erro estruturado: `code` + `msg` |
 
-Examples:
+Exemplos:
 ```json
 {"v":1,"t":"JOIN","name":"ana"}
 {"v":1,"t":"WELCOME","pid":1,"tok":"9f2c4a1b7e0d5c33","w":60,"h":40,"tick_rate":8.0,"timeout":5.0}
@@ -61,65 +63,65 @@ Examples:
 {"v":1,"t":"ERROR","code":"BAD_FIELD","msg":"INPUT.dir: expected one of ('U', 'D', 'L', 'R')","ref":"INPUT"}
 ```
 
-## 6. Error handling (what can go wrong → what happens)
-| Situation | Handling |
+## 6. Tratamento de erros (o que pode dar errado → o que acontece)
+| Situação | Tratamento |
 |---|---|
-| Server not running / unreachable | Client retries JOIN 5× (0.5 s) then shows **FAILED: server unavailable** (no crash); `R` retries |
-| Hostname can't be resolved | Immediate FAILED with message |
-| Port in use / bad bind | Server prints `cannot bind UDP host:port: …`, exit code 2 |
-| Invalid JSON, wrong version, unknown type, missing/invalid fields, oversize datagram | Rejected before touching game state; `ERROR` reply (≤ 5/s per address); throttled log line |
-| Inputs: reversal, bad direction, flood | Reversal/invalid ignored; flood limited by a token bucket → `RATE_LIMITED` |
-| Duplicate / reordered `INPUT`, retried `JOIN`, repeated `LEAVE` | Idempotent: ignored or same `WELCOME` re-sent; never executes twice |
-| Stale / duplicate `STATE` | Client drops it (`seq` ≤ last applied) |
-| Lost datagrams | Next `STATE` supersedes; inputs sent twice |
-| Wrong/forged token or token from another address | `BAD_SESSION`, no state change |
-| Client vanishes | Server expires the session after the timeout and frees the snake |
-| Server vanishes / restarts | Client: no data for 2 s → **LOST**, auto re-JOIN; on `SERVER_SHUTDOWN` → FAILED |
-| Server full | `SERVER_FULL` shown to the player |
-| Unexpected exceptions | Caught per datagram / per tick; server keeps running |
+| Servidor fora do ar / inalcançável | O cliente tenta JOIN 5 vezes (a cada 0,5 s) e mostra **FAILED: server unavailable** (sem travar); a tecla `R` tenta de novo |
+| Nome do servidor não resolve | FAILED imediato, com mensagem |
+| Porta em uso / bind inválido | O servidor imprime `cannot bind UDP host:port: …` e sai com código 2 |
+| JSON inválido, versão errada, tipo desconhecido, campos ausentes/inválidos, datagrama grande demais | Rejeitado antes de tocar no estado do jogo; resposta `ERROR` (até 5/s por endereço); log com limitação de repetição |
+| Entradas: inversão de sentido, direção inválida, flood | Inversão e direção inválida são ignoradas; flood é limitado por token bucket → `RATE_LIMITED` |
+| `INPUT` duplicado ou fora de ordem, `JOIN` repetido, `LEAVE` repetido | Idempotente: ignorado, ou o mesmo `WELCOME` é reenviado; nunca executa duas vezes |
+| `STATE` antigo ou duplicado | O cliente descarta (`seq` ≤ último aplicado) |
+| Datagramas perdidos | O próximo `STATE` substitui o perdido; as teclas são enviadas duas vezes |
+| Token falso, ou token vindo de outro endereço | `BAD_SESSION`, sem alterar o estado |
+| Cliente some | O servidor expira a sessão após o timeout e libera a cobra |
+| Servidor some / reinicia | Cliente: 2 s sem dados → **LOST** e novo JOIN automático; com `SERVER_SHUTDOWN` → FAILED |
+| Servidor lotado | `SERVER_FULL` é mostrado ao jogador |
+| Exceções inesperadas | Capturadas por datagrama e por tick; o servidor continua rodando |
 
-## 7. Prerequisites and setup
-Python 3.10+ (developed on 3.14).
+## 7. Pré-requisitos e instalação
+Python 3.10+ (desenvolvido no 3.14).
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt        # Windows: .venv\Scripts\pip ...
 ```
-Dependency note: `pygame-ce` (same `import pygame` API) is used because the plain `pygame 2.6.1` wheel for Python 3.14 shipped **without its font module**. The server, protocol, game and network client use only the standard library.
+Observação sobre dependência: usa-se o `pygame-ce` (mesma API do `import pygame`) porque o pacote `pygame 2.6.1` para Python 3.14 veio **sem o módulo de fontes**. Servidor, protocolo, jogo e a camada de rede do cliente usam apenas a biblioteca padrão.
 
-## 8. Running
+## 8. Como executar
 ```bash
-# Terminal 1 – server
+# Terminal 1 – servidor
 .venv/bin/python -m snakenet.server --host 127.0.0.1 --port 5000
 
-# Terminals 2, 3, … – clients (arrow keys / WASD, R = reconnect, Esc = quit)
+# Terminais 2, 3, … – clientes (setas / WASD = mover, R = reconectar, Esc = sair)
 .venv/bin/python -m snakenet.client --host 127.0.0.1 --port 5000 --name ana
 .venv/bin/python -m snakenet.client --host 127.0.0.1 --port 5000 --name bob
 
-# Optional – headless bots for demos/captures
+# Opcional – bots sem janela, para demonstração/captura
 .venv/bin/python -m snakenet.client.bot --port 5000 --name bot1 --duration 60
-tools/demo_local.sh            # server + 2 bots
+tools/demo_local.sh            # servidor + 2 bots
 ```
-**Several clients on one computer:** run the client command in several terminals; each gets its own ephemeral source port.
-**Over a local network:** on the server machine run `--host 0.0.0.0 --port 5000`, find its LAN IP (`ip addr` / `ipconfig`), allow inbound **UDP 5000** in the firewall, and on other machines run `python -m snakenet.client --host <SERVER_LAN_IP> --port 5000`. *LAN play across two real machines has not been tested yet; internet play is not supported/tested.*
+**Vários clientes no mesmo computador:** rode o comando do cliente em vários terminais; cada um recebe uma porta de origem efêmera própria.
+**Em rede local:** na máquina do servidor, rode com `--host 0.0.0.0 --port 5000`, descubra o IP dela na LAN (`ip addr` / `ipconfig`), libere a porta **UDP 5000** no firewall e, nas outras máquinas, rode `python -m snakenet.client --host <IP_DO_SERVIDOR> --port 5000`. *O jogo em LAN entre duas máquinas reais ainda não foi testado; jogo pela internet não é suportado nem foi testado.*
 
-## 9. Tests and Wireshark
+## 9. Testes e Wireshark
 ```bash
-.venv/bin/python -m pytest          # protocol, game rules, server (real UDP on localhost), client, headless UI
+.venv/bin/python -m pytest          # protocolo, regras do jogo, servidor (UDP real em localhost), cliente e UI sem janela
 ```
-Wireshark capture and analysis: **[docs/WIRESHARK.md](docs/WIRESHARK.md)** (filter `udp.port == 5000`). Assignment traceability: **[docs/COMPLIANCE.md](docs/COMPLIANCE.md)**; presentation: **[docs/PRESENTATION.md](docs/PRESENTATION.md)**; schedule: **[docs/PLAN.md](docs/PLAN.md)**.
+Captura e análise no Wireshark: **[docs/WIRESHARK.md](docs/WIRESHARK.md)** (filtro `udp.port == 5000`). Rastreabilidade com o enunciado: **[docs/COMPLIANCE.md](docs/COMPLIANCE.md)**; apresentação: **[docs/PRESENTATION.md](docs/PRESENTATION.md)**; cronograma: **[docs/PLAN.md](docs/PLAN.md)**.
 
-## 10. Known limitations
-* UDP: no delivery guarantee; a fully lost key press is simply lost. No encryption; tokens are readable on the wire. IPv4 only; one match per server; no persistence.
-* Simultaneous moves: two heads swapping adjacent cells do not collide. Max 8 players, snake length ≤ 40 (keeps `STATE` ≤ 1472 B, tested at the worst case).
-* Client accepts server datagrams only from the exact IP:port it sent to (a multi-homed server replying from another IP would be ignored).
-* Network-condition behaviour (loss/latency) is covered by logic tests, not yet measured with `tc netem`.
+## 10. Limitações conhecidas
+* UDP: sem garantia de entrega; uma tecla totalmente perdida simplesmente se perde. Sem criptografia; os tokens são legíveis na rede. Só IPv4; uma partida por servidor; sem persistência.
+* Movimentos simultâneos: duas cabeças que trocam de célula adjacente não colidem. Máximo de 8 jogadores e cobra com no máximo 40 segmentos (mantém o `STATE` ≤ 1472 bytes, testado no pior caso).
+* O cliente só aceita datagramas vindos exatamente do IP:porta para o qual enviou (um servidor com várias interfaces que responda por outro IP seria ignorado).
+* O comportamento sob perda/latência é coberto por testes de lógica, mas ainda não foi medido com `tc netem`.
 
-## 11. Verification status (honest summary)
-| Item | Status |
+## 11. Estado da verificação (resumo honesto)
+| Item | Estado |
 |---|---|
-| Automated tests | **59 passed** (last run: `pytest`, 5 s). See COMPLIANCE.md for the mapping |
-| Real run: server + 2 bots + headless UI client on localhost, graceful SIGTERM stop | Observed OK (screenshot: `evidence/screenshot-headless.png`) |
-| Interactive play with a human on a real window | **Not yet done** (needs a desktop session) |
-| LAN test between two machines | **Not yet done** |
-| Wireshark capture / screenshots | **Not yet done** — blocked in the dev sandbox; procedure in docs/WIRESHARK.md |
-| Packet-loss experiment (`tc netem`) | Not run |
+| Testes automatizados | **59 passaram** (`pytest`, ~5 s). Mapeamento em COMPLIANCE.md |
+| Execução real: servidor + 2 bots + cliente com UI sem janela em localhost, parada limpa com SIGTERM | Observado OK (captura de tela: `evidence/screenshot-headless.png`) |
+| Jogo interativo com humano em janela real | **Ainda não feito** (precisa de sessão gráfica) |
+| Teste em LAN entre duas máquinas | **Ainda não feito** |
+| Captura / telas do Wireshark | **Ainda não feito** — bloqueado no ambiente de desenvolvimento; procedimento em docs/WIRESHARK.md |
+| Experimento de perda de pacotes (`tc netem`) | Não executado |

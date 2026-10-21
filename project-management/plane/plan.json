@@ -2,29 +2,29 @@
   "cycles": [
     {
       "key": "C1",
-      "name": "Cycle 1 - Networking core",
-      "description": "Two clients exchange authoritative state over explicit UDP sockets.",
+      "name": "Ciclo 1 - Núcleo de rede",
+      "description": "Dois clientes trocam estado autoritativo por sockets UDP explícitos.",
       "start_date": "2026-10-15",
       "end_date": "2026-10-17"
     },
     {
       "key": "C2",
-      "name": "Cycle 2 - Playable game and tests",
-      "description": "UI, bot, automated tests, multi-client run.",
+      "name": "Ciclo 2 - Jogo jogável e testes",
+      "description": "Interface, bot, testes automatizados, execução com vários clientes.",
       "start_date": "2026-10-18",
       "end_date": "2026-10-21"
     },
     {
       "key": "C3",
-      "name": "Cycle 3 - Evidence and docs",
-      "description": "README, protocol, diagram, Wireshark capture, LAN test, compliance table.",
+      "name": "Ciclo 3 - Evidências e documentação",
+      "description": "README, protocolo, diagrama, captura Wireshark, teste em LAN, tabela de conformidade.",
       "start_date": "2026-10-22",
       "end_date": "2026-10-25"
     },
     {
       "key": "C4",
-      "name": "Cycle 4 - Presentation and buffer",
-      "description": "Presentation plan, rehearsal, final clean-venv check.",
+      "name": "Ciclo 4 - Apresentação e folga",
+      "description": "Plano de apresentação, ensaio, verificação final em venv limpo.",
       "start_date": "2026-10-26",
       "end_date": "2026-10-28"
     }
@@ -32,43 +32,43 @@
   "issues": [
     {
       "key": "SN-1",
-      "title": "SN-1 Inspect repository and assignment PDF",
+      "title": "SN-1 Inspecionar repositório e PDF do enunciado",
       "cycle": "C1",
       "state": "done",
       "priority": "high",
-      "description": "Read the PDF; repo was empty (greenfield).",
+      "description": "Li o PDF; o repositório estava vazio (projeto do zero).",
       "needs_human": false
     },
     {
       "key": "SN-2",
-      "title": "SN-2 Protocol package: schemas, validators, codec, limits",
+      "title": "SN-2 Pacote de protocolo: schemas, validadores, codec, limites",
       "cycle": "C1",
       "state": "done",
       "priority": "urgent",
-      "description": "snakenet/protocol/. Tested by tests/protocol.",
+      "description": "snakenet/protocol/. Testado em tests/protocol.",
       "needs_human": false
     },
     {
       "key": "SN-3",
-      "title": "SN-3 Game simulation (pure domain)",
+      "title": "SN-3 Simulação do jogo (domínio puro)",
       "cycle": "C1",
       "state": "done",
       "priority": "urgent",
-      "description": "snakenet/game/world.py. Tested by tests/game.",
+      "description": "snakenet/game/world.py. Testado em tests/game.",
       "needs_human": false
     },
     {
       "key": "SN-4",
-      "title": "SN-4 UDP server: sessions, validation, tick loop, expiry",
+      "title": "SN-4 Servidor UDP: sessões, validação, loop de ticks, expiração",
       "cycle": "C1",
       "state": "done",
       "priority": "urgent",
-      "description": "snakenet/server/. Tested with real localhost UDP.",
+      "description": "snakenet/server/. Testado com UDP real em localhost.",
       "needs_human": false
     },
     {
       "key": "SN-5",
-      "title": "SN-5 Client network layer (thread, join retry, stale drop, lost detection)",
+      "title": "SN-5 Camada de rede do cliente (thread, retentativa de JOIN, descarte de antigos, detecção de perda)",
       "cycle": "C1",
       "state": "done",
       "priority": "urgent",
@@ -77,7 +77,7 @@
     },
     {
       "key": "SN-6",
-      "title": "SN-6 Repository configuration (git, .gitignore, deps, pytest)",
+      "title": "SN-6 Configuração do repositório (git, .gitignore, dependências, pytest)",
       "cycle": "C1",
       "state": "done",
       "priority": "medium",
@@ -86,16 +86,16 @@
     },
     {
       "key": "SN-7",
-      "title": "SN-7 pygame UI: arena, snakes, food, leaderboard, status banner",
+      "title": "SN-7 Interface pygame: arena, cobras, comida, placar, faixa de status",
       "cycle": "C2",
       "state": "done",
       "priority": "high",
-      "description": "snakenet/client/ui.py; headless screenshot in evidence/.",
+      "description": "snakenet/client/ui.py; captura de tela sem janela em evidence/.",
       "needs_human": false
     },
     {
       "key": "SN-8",
-      "title": "SN-8 Bot client for demos and captures",
+      "title": "SN-8 Cliente bot para demonstrações e capturas",
       "cycle": "C2",
       "state": "done",
       "priority": "medium",
@@ -104,16 +104,16 @@
     },
     {
       "key": "SN-9",
-      "title": "SN-9 Automated tests for the 14 required scenarios",
+      "title": "SN-9 Testes automatizados dos 14 cenários exigidos",
       "cycle": "C2",
       "state": "done",
       "priority": "urgent",
-      "description": "59 tests passing (observed).",
+      "description": "59 testes passando (observado).",
       "needs_human": false
     },
     {
       "key": "SN-10",
-      "title": "SN-10 Headless UI smoke test + screenshot",
+      "title": "SN-10 Teste de fumaça da UI sem janela + captura de tela",
       "cycle": "C2",
       "state": "done",
       "priority": "medium",
@@ -122,25 +122,25 @@
     },
     {
       "key": "SN-11",
-      "title": "SN-11 Multi-client localhost run observed",
+      "title": "SN-11 Execução observada com vários clientes em localhost",
       "cycle": "C2",
       "state": "done",
       "priority": "high",
-      "description": "Server + 2 bots + UI client, graceful SIGTERM stop.",
+      "description": "Servidor + 2 bots + cliente com UI, parada limpa com SIGTERM.",
       "needs_human": false
     },
     {
       "key": "SN-12",
-      "title": "SN-12 README with all PDF-required items",
+      "title": "SN-12 README com todos os itens exigidos pelo PDF",
       "cycle": "C3",
       "state": "done",
       "priority": "high",
-      "description": "README.md. Team members are placeholders.",
+      "description": "README.md. Os integrantes são placeholders.",
       "needs_human": false
     },
     {
       "key": "SN-13",
-      "title": "SN-13 Protocol specification",
+      "title": "SN-13 Especificação do protocolo",
       "cycle": "C3",
       "state": "done",
       "priority": "high",
@@ -149,7 +149,7 @@
     },
     {
       "key": "SN-14",
-      "title": "SN-14 Architecture diagram",
+      "title": "SN-14 Diagrama da arquitetura",
       "cycle": "C3",
       "state": "done",
       "priority": "high",
@@ -158,7 +158,7 @@
     },
     {
       "key": "SN-15",
-      "title": "SN-15 Wireshark guide and capture helper",
+      "title": "SN-15 Guia do Wireshark e script auxiliar de captura",
       "cycle": "C3",
       "state": "done",
       "priority": "medium",
@@ -167,25 +167,25 @@
     },
     {
       "key": "SN-16",
-      "title": "SN-16 Real Wireshark capture and screenshots into evidence/",
+      "title": "SN-16 Captura real no Wireshark e telas em evidence/",
       "cycle": "C3",
       "state": "todo",
       "priority": "urgent",
-      "description": "Blocked in dev sandbox (no capture rights). Follow docs/WIRESHARK.md on your own machine; fill the Observed table.",
+      "description": "Bloqueado no ambiente de desenvolvimento (sem permissão de captura). Siga docs/WIRESHARK.md na sua máquina e preencha a tabela Observado.",
       "needs_human": true
     },
     {
       "key": "SN-17",
-      "title": "SN-17 LAN test with a second machine (record real IPs/ports)",
+      "title": "SN-17 Teste em LAN com uma segunda máquina (registrar IPs/portas reais)",
       "cycle": "C3",
       "state": "todo",
       "priority": "high",
-      "description": "Run server with --host 0.0.0.0; open UDP 5000 in firewall.",
+      "description": "Rode o servidor com --host 0.0.0.0; libere UDP 5000 no firewall.",
       "needs_human": true
     },
     {
       "key": "SN-18",
-      "title": "SN-18 Compliance traceability table",
+      "title": "SN-18 Tabela de rastreabilidade com o enunciado",
       "cycle": "C3",
       "state": "done",
       "priority": "medium",
@@ -194,7 +194,7 @@
     },
     {
       "key": "SN-19",
-      "title": "SN-19 Presentation plan and Q&A",
+      "title": "SN-19 Plano da apresentação e perguntas e respostas",
       "cycle": "C4",
       "state": "done",
       "priority": "medium",
@@ -203,38 +203,38 @@
     },
     {
       "key": "SN-20",
-      "title": "SN-20 Rehearse 10-minute demo; every member explains the code",
+      "title": "SN-20 Ensaiar a demonstração de 10 minutos; todos explicam o código",
       "cycle": "C4",
       "state": "todo",
       "priority": "high",
-      "description": "Everyone may be questioned individually.",
+      "description": "Qualquer integrante pode ser questionado individualmente.",
       "needs_human": true
     },
     {
       "key": "SN-21",
-      "title": "SN-21 Final check of documented commands on a clean venv",
+      "title": "SN-21 Verificação final dos comandos documentados em venv limpo",
       "cycle": "C4",
       "state": "todo",
       "priority": "medium",
-      "description": "Fresh clone, follow README exactly.",
+      "description": "Clone novo, seguir o README exatamente.",
       "needs_human": false
     },
     {
       "key": "SN-22",
-      "title": "SN-22 Fill team member names in README",
+      "title": "SN-22 Preencher os nomes dos integrantes no README",
       "cycle": "C4",
       "state": "todo",
       "priority": "medium",
-      "description": "Placeholders remain.",
+      "description": "Os placeholders continuam.",
       "needs_human": true
     },
     {
       "key": "SN-23",
-      "title": "SN-23 Optional: boost, sound, menu (only if everything else is done)",
+      "title": "SN-23 Opcional: boost, som, menu (só se todo o resto estiver pronto)",
       "cycle": "C4",
       "state": "todo",
       "priority": "low",
-      "description": "Do not risk mandatory deliverables.",
+      "description": "Não arriscar as entregas obrigatórias.",
       "needs_human": false
     }
   ]

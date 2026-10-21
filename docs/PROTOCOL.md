@@ -1,60 +1,60 @@
-# SnakeNet Application Protocol — version 1
+# Protocolo da aplicação SnakeNet — versão 1
 
-Transport: **UDP** (IPv4). Default server port: **UDP 5000** (configurable).
-Encoding: one **UTF-8 JSON object per datagram**. Source of truth: [`snakenet/protocol/`](../snakenet/protocol/).
+Transporte: **UDP** (IPv4). Porta padrão do servidor: **UDP 5000** (configurável).
+Codificação: **um objeto JSON UTF-8 por datagrama**. Fonte da verdade: o pacote [`snakenet/protocol/`](../snakenet/protocol/) (`schemas.py`, `validators.py`, `codec.py`, `errors.py`, `limits.py`).
 
-> UDP is **not** reliable or ordered. Every rule below that sounds like reliability (sequence numbers,
-> retries, idempotency) is implemented by the *application* on top of best-effort datagrams.
+> O UDP **não** é confiável nem ordenado. Toda regra abaixo que pareça confiabilidade (números de sequência,
+> retentativas, idempotência) é implementada pela *aplicação*, por cima de datagramas "melhor esforço".
 
-## 1. Framing
+## 1. Enquadramento (framing)
 
-UDP keeps message boundaries: one `sendto` produces exactly one `recvfrom`. Therefore each datagram holds
-exactly one message, and **no length prefix or delimiter is needed** (TCP, a byte stream, would need one).
+O UDP preserva as fronteiras das mensagens: um `sendto` produz exatamente um `recvfrom`. Por isso cada datagrama
+carrega exatamente uma mensagem e **não é preciso prefixo de tamanho nem delimitador** (o TCP, que é um fluxo de bytes, precisaria).
 
 ## 2. Envelope
 
 ```json
-{"v": 1, "t": "INPUT", "...": "type-specific fields"}
+{"v": 1, "t": "INPUT", "...": "campos específicos do tipo"}
 ```
 
-| Field | Type | Rule |
+| Campo | Tipo | Regra |
 |---|---|---|
-| `v` | int | Must equal `1`. Missing → `BAD_FIELD`; other value → `BAD_VERSION`. |
-| `t` | string | One of the types below **and** valid for the direction it was sent in, else `BAD_TYPE`. |
+| `v` | int | Deve ser `1`. Ausente → `BAD_FIELD`; outro valor → `BAD_VERSION`. |
+| `t` | string | Um dos tipos abaixo **e** válido para o sentido em que foi enviado; senão `BAD_TYPE`. |
 
-Unknown extra fields are ignored and dropped. Booleans are never accepted as integers.
+Campos extras desconhecidos são ignorados e descartados. Booleanos nunca são aceitos como inteiros.
 
-## 3. Limits
+## 3. Limites
 
-| Limit | Value | Reason |
+| Limite | Valor | Motivo |
 |---|---|---|
-| Client → server datagram | ≤ 1024 bytes | Real messages are < 150 B; bounds parse cost. Larger → `TOO_LARGE`. |
-| Server → client datagram | ≤ 1472 bytes | 1500 (Ethernet MTU) − 20 (IPv4) − 8 (UDP): never IP-fragmented. |
-| Player name | 1–12 printable chars | |
-| Session timeout | 5 s of silence (`--session-timeout`) | |
-| INPUT rate | 30/s sustained, burst 30 (per session) | Token bucket. |
-| ERROR replies | ≤ 5/s per source address | Limits reflection and log spam. |
+| Datagrama cliente → servidor | ≤ 1024 bytes | As mensagens reais têm < 150 B; limita o custo de parsing. Maior → `TOO_LARGE`. |
+| Datagrama servidor → cliente | ≤ 1472 bytes | 1500 (MTU Ethernet) − 20 (IPv4) − 8 (UDP): nunca é fragmentado pelo IP. |
+| Nome do jogador | 1–12 caracteres imprimíveis | |
+| Timeout de sessão | 5 s de silêncio (`--session-timeout`) | |
+| Taxa de INPUT | 30/s sustentado, rajada de 30 (por sessão) | Token bucket. |
+| Respostas ERROR | ≤ 5/s por endereço de origem | Limita reflexão e spam de log. |
 
-## 4. Messages
+## 4. Mensagens
 
-Direction: **C→S** client to server, **S→C** server to client. `tok` is the 16-hex-char session token.
+Sentido: **C→S** cliente para servidor, **S→C** servidor para cliente. `tok` é o token de sessão (16 caracteres hexadecimais).
 
 ### JOIN (C→S)
-`{"v":1,"t":"JOIN","name":"ana"}` — request to enter the match. Retried by the client every 0.5 s, up to 5 times.
-Server: creates a session (new `pid`, random `tok`) and replies `WELCOME`; if that address already has a
-session the same `WELCOME` is re-sent (**idempotent**, no duplicate player). Full match → `ERROR SERVER_FULL`.
+`{"v":1,"t":"JOIN","name":"ana"}` — pedido para entrar na partida. O cliente repete a cada 0,5 s, até 5 vezes.
+Servidor: cria uma sessão (novo `pid`, `tok` aleatório) e responde `WELCOME`; se aquele endereço já tem sessão, o mesmo
+`WELCOME` é reenviado (**idempotente**, sem jogador duplicado). Partida cheia → `ERROR SERVER_FULL`.
 
 ### WELCOME (S→C)
 `{"v":1,"t":"WELCOME","pid":3,"tok":"9f2c4a1b7e0d5c33","w":60,"h":40,"tick_rate":8,"timeout":5}`
-`pid` is the player id, `tok` must accompany every later client message, `w`/`h` arena size in cells,
-`timeout` tells the client how fast it must send keep-alives (it pings every `timeout/3`).
+`pid` é o id do jogador; `tok` deve acompanhar toda mensagem seguinte do cliente; `w`/`h` são o tamanho da arena em células;
+`timeout` diz ao cliente com que frequência enviar keep-alives (ele envia PING a cada `timeout/3`).
 
 ### INPUT (C→S)
 `{"v":1,"t":"INPUT","tok":"9f2c4a1b7e0d5c33","seq":17,"dir":"U"}` — `dir` ∈ `U D L R`.
-`seq` is a per-client counter that increases with every new key press. The server accepts an INPUT only if
-`seq` > last accepted `seq` for that session, so **duplicates and reordered datagrams are ignored**. The client
-deliberately sends each press **twice with the same `seq`** to tolerate loss; the second copy is dropped as a
-duplicate. A reversal (e.g. `L` while moving `R`) is validated and ignored. Clients never send positions.
+`seq` é um contador por cliente que cresce a cada nova tecla. O servidor só aceita um INPUT se `seq` for maior que o último
+`seq` aceito daquela sessão; assim **duplicatas e datagramas fora de ordem são ignorados**. O cliente envia propositalmente
+cada tecla **duas vezes com o mesmo `seq`**, para tolerar perda; a segunda cópia é descartada como duplicata.
+Uma inversão de sentido (por exemplo `L` enquanto anda para `R`) é validada e ignorada. O cliente nunca envia posições.
 
 ### STATE (S→C)
 ```json
@@ -63,56 +63,56 @@ duplicate. A reversal (e.g. `L` while moving `R`) is validated and ignored. Clie
            {"id":4,"n":"bob","c":4,"a":0,"s":0}],
  "food":[[5,5],[20,31]]}
 ```
-`seq` is the snapshot counter (strictly increasing), `tick` the simulation tick. Per snake: `id`, `n` name,
-`c` colour index, `a` alive(0/1), `s` score; if alive also `x`,`y` (head cell) and `d` (one `U/D/L/R` per step
-from each segment to the next, towards the tail — so the body length is `len(d)+1`). Sent to every session at
-`snapshot_rate` (default 8 Hz). The same bytes go to all clients.
-**Client rule:** discard a STATE whose `seq` ≤ the highest `seq` already applied (stale/reordered). Lost
-snapshots are *not* retransmitted; the next one supersedes them.
+`seq` é o contador de snapshots (estritamente crescente); `tick` é o tick da simulação. Por cobra: `id`, `n` nome,
+`c` índice da cor, `a` viva (0/1), `s` pontuação; se estiver viva, também `x`,`y` (célula da cabeça) e `d` (um caractere
+`U/D/L/R` por passo, de cada segmento para o seguinte, em direção à cauda — logo o comprimento do corpo é `len(d)+1`).
+Enviado a todas as sessões na `snapshot_rate` (padrão 8 Hz). Os mesmos bytes vão para todos os clientes.
+**Regra do cliente:** descartar um STATE cujo `seq` seja ≤ ao maior `seq` já aplicado (antigo/reordenado). Snapshots perdidos
+**não** são retransmitidos; o seguinte os substitui.
 
 ### PING (C→S) / PONG (S→C)
 `{"v":1,"t":"PING","tok":"…","seq":4,"ts":1234.5}` → `{"v":1,"t":"PONG","seq":4,"ts":1234.5,"tick":240}`
-`ts` is the client's own clock value, echoed back so the client computes RTT. Any valid message refreshes the
-session, so PING is the keep-alive when the player sends no input.
+`ts` é o valor do relógio do próprio cliente, devolvido para ele calcular o RTT. Qualquer mensagem válida renova a sessão,
+então o PING é o keep-alive quando o jogador não envia teclas.
 
 ### LEAVE (C→S)
-`{"v":1,"t":"LEAVE","tok":"…"}` — removes the session. Idempotent: leaving twice (the client sends it twice
-in case one datagram is lost) or with an unknown token produces no error. If both are lost, the timeout removes the player.
+`{"v":1,"t":"LEAVE","tok":"…"}` — remove a sessão. Idempotente: sair duas vezes (o cliente envia duas vezes, caso um datagrama
+se perca) ou com token desconhecido não gera erro. Se ambos se perderem, o timeout remove o jogador.
 
 ### ERROR (S→C)
 `{"v":1,"t":"ERROR","code":"BAD_FIELD","msg":"INPUT.dir: expected one of ('U', 'D', 'L', 'R')","ref":"INPUT"}`
-(`ref` optional: the type that caused it).
+(`ref` é opcional: o tipo que causou o erro).
 
-| Code | Cause | Client behaviour |
+| Código | Causa | Comportamento do cliente |
 |---|---|---|
-| `BAD_JSON` | Not UTF-8 JSON object | Log; show error. |
-| `BAD_VERSION` | `v` ≠ 1 | Fail (no retry): incompatible server. |
-| `BAD_TYPE` | Unknown type / wrong direction | Log. |
-| `BAD_FIELD` | Missing or invalid field | Log. |
-| `TOO_LARGE` | Datagram over limit | Log. |
-| `BAD_SESSION` | Unknown token, or token used from a different address | Treat as lost; re-JOIN. |
-| `SERVER_FULL` | No free slot | Fail, show message. |
-| `RATE_LIMITED` | INPUT flood | Log. |
-| `SESSION_EXPIRED` | Idle past timeout | Treat as lost; re-JOIN. |
-| `SERVER_SHUTDOWN` | Server closing | Fail, show message. |
+| `BAD_JSON` | Não é um objeto JSON UTF-8 | Registra em log; mostra o erro. |
+| `BAD_VERSION` | `v` ≠ 1 | Falha (sem retentativa): servidor incompatível. |
+| `BAD_TYPE` | Tipo desconhecido / sentido errado | Registra em log. |
+| `BAD_FIELD` | Campo ausente ou inválido | Registra em log. |
+| `TOO_LARGE` | Datagrama acima do limite | Registra em log. |
+| `BAD_SESSION` | Token desconhecido, ou usado a partir de outro endereço | Considera perdida; faz JOIN de novo. |
+| `SERVER_FULL` | Sem vaga | Falha e mostra a mensagem. |
+| `RATE_LIMITED` | Flood de INPUT | Registra em log. |
+| `SESSION_EXPIRED` | Inativo além do timeout | Considera perdida; faz JOIN de novo. |
+| `SERVER_SHUTDOWN` | Servidor encerrando | Falha e mostra a mensagem. |
 
-`ERROR` is best-effort: the receiver may never see it; correctness never depends on it arriving.
+O `ERROR` é "melhor esforço": o receptor pode nunca vê-lo; a correção nunca depende de ele chegar.
 
-## 5. Sessions
+## 5. Sessões
 
-* Identity = secret `tok` **and** the source `(ip, port)` it was issued to. A token replayed from another address → `BAD_SESSION`.
-  (Tokens travel in clear text; this prevents accidental/blind cross-player commands, not an on-path attacker.)
-* A client crash that restarts from the same port within the timeout is re-attached to its old session (same `pid`).
-* The server drops a session after `session_timeout` without any valid message and sends `SESSION_EXPIRED` (best effort).
-* Client-side: no datagram from the server for 2 s → status *connection lost*, automatic re-JOIN (5 attempts), then *failed*.
+* Identidade = `tok` secreto **e** o `(ip, porta)` de origem para o qual foi emitido. Um token repetido a partir de outro endereço → `BAD_SESSION`.
+  (Os tokens trafegam em texto claro; isso evita comandos acidentais/às cegas entre jogadores, não um atacante no caminho da rede.)
+* Um cliente que cai e reinicia a partir da mesma porta dentro do timeout é reanexado à sessão antiga (mesmo `pid`).
+* O servidor descarta a sessão após `session_timeout` sem nenhuma mensagem válida e envia `SESSION_EXPIRED` (melhor esforço).
+* No cliente: 2 s sem nenhum datagrama do servidor → estado *connection lost* e novo JOIN automático (5 tentativas); depois, *failed*.
 
-## 6. Reliability summary
+## 6. Resumo da confiabilidade
 
-| Traffic | Strategy |
+| Tráfego | Estratégia |
 |---|---|
-| STATE | Unreliable. Sequence numbers; client drops stale; next snapshot repairs loss. |
-| INPUT | Sequence numbers + 2 copies per press; server drops duplicates. A fully lost press is lost (player presses again). |
-| JOIN | Bounded retries (5 × 0.5 s); server side idempotent; outcome is WELCOME, ERROR, or client-side timeout. |
-| LEAVE | Sent twice; idempotent; timeout is the safety net. |
+| STATE | Não confiável. Números de sequência; o cliente descarta os antigos; o próximo snapshot repara a perda. |
+| INPUT | Números de sequência + 2 cópias por tecla; o servidor descarta duplicatas. Uma tecla totalmente perdida se perde (o jogador aperta de novo). |
+| JOIN | Retentativas limitadas (5 × 0,5 s); idempotente no servidor; o resultado é WELCOME, ERROR ou timeout no cliente. |
+| LEAVE | Enviado duas vezes; idempotente; o timeout é a rede de segurança. |
 
-Limitations: no encryption or authentication of players; no IPv6; `seq` is not wrap-around aware (Python ints, session-length matches); a client behind NAT that changes port gets a new session.
+Limitações: sem criptografia nem autenticação de jogadores; sem IPv6; `seq` não trata estouro (inteiros do Python, suficientes para a duração de uma sessão); um cliente atrás de NAT que mude de porta recebe uma nova sessão.

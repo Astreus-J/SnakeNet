@@ -1,39 +1,39 @@
-# Presentation plan (≤ 10 minutes)
+# Plano da apresentação (≤ 10 minutos)
 
-| # | Min | Topic | What to show / say |
+| # | Min | Tópico | O que mostrar / dizer |
 |---|---|---|---|
-| 1 | 1:00 | Problem and solution | Real-time multiplayer needs many processes to share one consistent world with low latency. SnakeNet: arena where several clients play the same match through one authoritative server. |
-| 2 | 1:00 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md) diagram: N clients ⇄ 1 server, each with its own UDP socket; server owns the state; clients send *inputs*, receive *snapshots*. |
-| 3 | 1:30 | Socket implementation | `server/app.py`: `socket(AF_INET, SOCK_DGRAM)`, `bind`, `recvfrom`/`sendto`, timeout = time to next tick. `client/network.py`: own socket, receive thread so rendering never blocks. Point at ip:port config. |
-| 4 | 1:30 | Why UDP (vs TCP) | Next section. |
-| 5 | 1:30 | Application protocol | [PROTOCOL.md](PROTOCOL.md): JSON envelope `{v,t,...}`; JOIN/WELCOME/INPUT/STATE/PING/PONG/LEAVE/ERROR; seq numbers; validation. |
-| 6 | 2:00 | Live demo | Server + 2–3 clients (one human, bots). Eat, grow, die, leaderboard. Kill the server → client shows *connection lost*; restart → R reconnects. Send junk with `nc -u` → server survives. |
-| 7 | 1:00 | Wireshark | Open the real capture: UDP, ports, `JOIN`, repeating `INPUT` pairs, 8 Hz `STATE`, `ERROR`. (Must be your own capture – see [WIRESHARK.md](WIRESHARK.md).) |
-| 8 | 0:30 | Errors and conclusion | Table of failure → handling; limitations; what we learned. |
+| 1 | 1:00 | Problema e solução | Jogo multiplayer em tempo real exige que vários processos compartilhem um mundo consistente com baixa latência. SnakeNet: arena em que vários clientes jogam a mesma partida por meio de um servidor autoritativo. |
+| 2 | 1:00 | Arquitetura | Diagrama de [ARCHITECTURE.md](ARCHITECTURE.md): N clientes ⇄ 1 servidor, cada um com seu socket UDP; o servidor é dono do estado; os clientes enviam *entradas* e recebem *snapshots*. |
+| 3 | 1:30 | Implementação dos sockets | `server/app.py`: `socket(AF_INET, SOCK_DGRAM)`, `bind`, `recvfrom`/`sendto`, timeout = tempo até o próximo tick. `client/network.py`: socket próprio e thread de recepção, para o desenho nunca travar. Mostrar a configuração de ip:porta. |
+| 4 | 1:30 | Por que UDP (e não TCP) | Próxima seção. |
+| 5 | 1:30 | Protocolo da aplicação | [PROTOCOL.md](PROTOCOL.md): envelope JSON `{v,t,...}`; JOIN/WELCOME/INPUT/STATE/PING/PONG/LEAVE/ERROR; números de sequência; validação. |
+| 6 | 2:00 | Demonstração ao vivo | Servidor + 2–3 clientes (um humano, bots). Comer, crescer, morrer, placar. Derrubar o servidor → o cliente mostra *connection lost*; reiniciar → `R` reconecta. Enviar lixo com `nc -u` → o servidor sobrevive. |
+| 7 | 1:00 | Wireshark | Abrir a captura real: UDP, portas, `JOIN`, pares de `INPUT`, `STATE` a 8 Hz, `ERROR`. (Tem que ser a captura de vocês — veja [WIRESHARK.md](WIRESHARK.md).) |
+| 8 | 0:30 | Erros e conclusão | Tabela falha → tratamento; limitações; o que aprendemos. |
 
-## UDP vs TCP (talking points)
+## UDP × TCP (argumentos)
 
-* A new snapshot **supersedes** the previous one, so retransmitting an old one is wasted work. TCP would retransmit and *block* newer data behind the lost segment (**head-of-line blocking**), producing visible stutter.
-* UDP has no connection setup: the first datagram is already `JOIN`. No per-client connection state in the kernel; the server tracks sessions itself (token + address + timeout).
-* **Message boundaries:** one datagram = one message, so no framing code. TCP is a byte stream: we would need length-prefix or delimiters, and a read could return half a message.
-* What UDP costs us and what we added: loss/reorder/duplication → sequence numbers (stale `STATE` dropped, duplicate `INPUT` ignored), JOIN retries (bounded, idempotent), timeouts for dead peers, redundancy for inputs. We did *not* rebuild TCP.
-* If we used TCP: simpler reliability and framing is our job; join = 3-way handshake; one connection per player; a lost segment stalls all later state; Nagle/delayed-ACK tuning (`TCP_NODELAY`); but it would be a better choice for chat, login or file transfer.
+* Um novo snapshot **substitui** o anterior, então retransmitir um antigo é trabalho desperdiçado. O TCP retransmitiria e *seguraria* os dados novos atrás do segmento perdido (**bloqueio de cabeça de fila**, *head-of-line blocking*), causando travadas visíveis.
+* O UDP não tem estabelecimento de conexão: o primeiro datagrama já é o `JOIN`. Não há estado de conexão por cliente no kernel; o servidor controla as sessões por conta própria (token + endereço + timeout).
+* **Fronteiras de mensagem:** um datagrama = uma mensagem, então não há código de enquadramento. O TCP é um fluxo de bytes: precisaríamos de prefixo de tamanho ou delimitadores, e uma leitura poderia devolver meia mensagem.
+* O que o UDP nos custa e o que acrescentamos: perda/reordenação/duplicação → números de sequência (`STATE` antigo descartado, `INPUT` duplicado ignorado), retentativas de JOIN (limitadas e idempotentes), timeouts para pares mortos, redundância nas entradas. **Não** reconstruímos o TCP.
+* Se usássemos TCP: a confiabilidade ficaria mais simples, mas o enquadramento passaria a ser problema nosso; entrar = handshake de 3 vias; uma conexão por jogador; um segmento perdido trava todo o estado seguinte; seria preciso ajustar Nagle/ACK atrasado (`TCP_NODELAY`). Em compensação, seria a melhor escolha para chat, login ou transferência de arquivos.
 
-## Likely individual questions
+## Perguntas individuais prováveis
 
-| Question | Short answer |
+| Pergunta | Resposta curta |
 |---|---|
-| Is UDP reliable/ordered? | No. Datagrams may be lost, duplicated, reordered. We handle it in the application only where it matters. |
-| What identifies a UDP "connection"? | There is none. The server keys sessions by the secret token and source (IP, port). |
-| What is a socket? | The OS endpoint for a process, identified by protocol + local IP + port. |
-| Why does the client not bind to a port? | The OS assigns an ephemeral source port on first `sendto`; the server replies to that address. |
-| IP vs port? | IP selects the host (network layer); port selects the process on it (transport layer). |
-| What if a `STATE` is lost? | Nothing: the next arrives in ~125 ms and carries the full world. |
-| What if `JOIN` or its `WELCOME` is lost? | Client retries (5 × 0.5 s); server answers a repeated JOIN with the same `WELCOME`, so no duplicate player. Else *server unavailable*. |
-| Why must the server be authoritative? | Clients can lie or lag; the server validates inputs and decides outcomes, so all clients converge on one state. |
-| Why send input twice? | Cheap loss insurance; same `seq` so the server ignores the copy. |
-| Max datagram size? | UDP payload up to ~65 507 B, but we cap server packets at 1472 B (MTU − IP − UDP) to avoid IP fragmentation. |
-| What does a client do on `BAD_SESSION`? | Treats the session as gone and re-JOINs. |
-| Can someone steal my snake? | They'd need the token *and* my IP:port; tokens are unencrypted, so an on-path attacker could (documented limitation). |
-| Why JSON? | Human-readable in Wireshark and easy to validate; costs bytes versus a binary format. |
-| Why is the server single-threaded? | No shared-state races; one loop reads, simulates, sends. UDP sends never wait for the receiver. |
+| O UDP é confiável/ordenado? | Não. Datagramas podem se perder, duplicar ou chegar fora de ordem. Tratamos isso na aplicação, só onde importa. |
+| O que identifica uma "conexão" UDP? | Não existe conexão. O servidor indexa as sessões pelo token secreto e pela origem (IP, porta). |
+| O que é um socket? | O ponto de comunicação do processo no sistema operacional, identificado por protocolo + IP local + porta. |
+| Por que o cliente não faz bind em uma porta? | O SO atribui uma porta de origem efêmera no primeiro `sendto`; o servidor responde para esse endereço. |
+| IP × porta? | O IP escolhe a máquina (camada de rede); a porta escolhe o processo nela (camada de transporte). |
+| E se um `STATE` se perder? | Nada: o próximo chega em ~125 ms e traz o mundo inteiro. |
+| E se o `JOIN` ou o seu `WELCOME` se perder? | O cliente tenta de novo (5 × 0,5 s); o servidor responde a um JOIN repetido com o mesmo `WELCOME`, então não há jogador duplicado. Senão: *server unavailable*. |
+| Por que o servidor precisa ser autoritativo? | Clientes podem mentir ou atrasar; o servidor valida as entradas e decide os resultados, assim todos convergem para um único estado. |
+| Por que enviar a entrada duas vezes? | Seguro barato contra perda; mesmo `seq`, então o servidor ignora a cópia. |
+| Tamanho máximo do datagrama? | O payload UDP vai até ~65 507 B, mas limitamos os pacotes do servidor a 1472 B (MTU − IP − UDP) para evitar fragmentação IP. |
+| O que o cliente faz ao receber `BAD_SESSION`? | Considera a sessão perdida e faz JOIN de novo. |
+| Alguém consegue roubar minha cobra? | Precisaria do token **e** do meu IP:porta; os tokens não são criptografados, então um atacante no caminho conseguiria (limitação documentada). |
+| Por que JSON? | Legível no Wireshark e fácil de validar; custa bytes em comparação a um formato binário. |
+| Por que o servidor tem uma só thread? | Sem condições de corrida em estado compartilhado; um loop lê, simula e envia. O envio UDP nunca espera o receptor. |

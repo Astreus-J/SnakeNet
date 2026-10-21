@@ -1,25 +1,25 @@
-# SnakeNet Architecture
+# Arquitetura do SnakeNet
 
 ```mermaid
 flowchart LR
-  subgraph PC1["Host A (client)"]
-    UI1["client/ui.py<br/>pygame render + keyboard"]
-    NET1["client/network.py<br/>network thread"]
-    S1(("UDP socket<br/>ephemeral port"))
-    UI1 <-->|"lock-guarded latest STATE / send_input()"| NET1
+  subgraph PC1["Máquina A (cliente)"]
+    UI1["client/ui.py<br/>desenho pygame + teclado"]
+    NET1["client/network.py<br/>thread de rede"]
+    S1(("socket UDP<br/>porta efêmera"))
+    UI1 <-->|"último STATE protegido por lock / send_input()"| NET1
     NET1 --- S1
   end
-  subgraph PC2["Host B (client)"]
+  subgraph PC2["Máquina B (cliente)"]
     UI2["client/ui.py"] <--> NET2["client/network.py"]
-    NET2 --- S2(("UDP socket<br/>ephemeral port"))
+    NET2 --- S2(("socket UDP<br/>porta efêmera"))
   end
-  subgraph SRV["Server host  (--host / --port, default UDP 5000)"]
-    SS(("UDP socket<br/>bound IP:PORT"))
-    LOOP["server/app.py<br/>single loop:<br/>recv → protocol.decode → validate"]
-    SESS["server/sessions.py<br/>token + address + rate limit"]
-    WORLD["game/world.py World<br/>authoritative state<br/>fixed tick 8 Hz"]
+  subgraph SRV["Máquina do servidor  (--host / --port, padrão UDP 5000)"]
+    SS(("socket UDP<br/>IP:PORTA do bind"))
+    LOOP["server/app.py<br/>loop único:<br/>recv → protocol.decode → valida"]
+    SESS["server/sessions.py<br/>token + endereço + limite de taxa"]
+    WORLD["game/world.py World<br/>estado autoritativo<br/>tick fixo de 8 Hz"]
     SS --> LOOP --> SESS --> WORLD
-    WORLD -->|"snapshot every tick"| LOOP --> SS
+    WORLD -->|"snapshot a cada tick"| LOOP --> SS
   end
   S1 -- "JOIN / INPUT / PING / LEAVE  (UDP, JSON)" --> SS
   S2 -- "JOIN / INPUT / PING / LEAVE" --> SS
@@ -27,19 +27,19 @@ flowchart LR
   SS -- "WELCOME / STATE / PONG / ERROR" --> S2
 ```
 
-## Sequence: join and play
+## Sequência: entrar e jogar
 
 ```mermaid
 sequenceDiagram
-  participant C as Client
-  participant S as Server
+  participant C as Cliente
+  participant S as Servidor
   C->>S: JOIN {name}
   S-->>C: WELCOME {pid, tok, w, h}
-  loop every key press
-    C->>S: INPUT {tok, seq, dir} (x2, same seq)
+  loop a cada tecla
+    C->>S: INPUT {tok, seq, dir} (x2, mesmo seq)
   end
-  loop every tick (8 Hz)
-    Note over S: validate inputs, move, eat, collide, score
+  loop a cada tick (8 Hz)
+    Note over S: valida entradas, move, come, colide, pontua
     S-->>C: STATE {seq, snakes, food}
   end
   C->>S: PING {tok, seq, ts}
@@ -47,38 +47,38 @@ sequenceDiagram
   C->>S: LEAVE {tok} (x2)
 ```
 
-## Responsibilities
+## Responsabilidades
 
-| Process | Does | Never does |
+| Processo | Faz | Nunca faz |
 |---|---|---|
-| **Server** (`snakenet/server/`, `snakenet/game/`) | Bind UDP socket; validate every datagram; own sessions; run the fixed-step simulation; decide movement, food, growth, collisions, deaths, scores; broadcast snapshots; expire idle sessions | Trust client positions/scores; block on any client |
-| **Client** (`snakenet/client/`) | Own UDP socket; JOIN with retry; send validated direction inputs; receive snapshots on a network thread; drop stale ones; render; show connection status; leave cleanly | Simulate the game or send state |
+| **Servidor** (`snakenet/server/`, `snakenet/game/`) | Faz o bind do socket UDP; valida todo datagrama; é dono das sessões; roda a simulação em passo fixo; decide movimento, comida, crescimento, colisões, mortes e pontos; envia os snapshots; expira sessões inativas | Confiar em posição/pontos enviados pelo cliente; travar esperando um cliente |
+| **Cliente** (`snakenet/client/`) | Tem socket UDP próprio; faz JOIN com retentativa; envia direções validadas; recebe snapshots em uma thread de rede; descarta os antigos; desenha; mostra o estado da conexão; sai de forma limpa | Simular o jogo ou enviar estado |
 
-## Layering and module map (dependencies point downward only)
+## Camadas e mapa de módulos (as dependências só apontam para baixo)
 
 ```
- server/__main__.py   client/__main__.py   client/bot.py        entry points (CLI, argv parsing)
+ server/__main__.py   client/__main__.py   client/bot.py        pontos de entrada (CLI, argumentos)
         |                    |                  |
- server/app.py         client/ui.py  ──►  client/network.py      application / adapters (UDP I/O, pygame)
+ server/app.py         client/ui.py  ──►  client/network.py      aplicação / adaptadores (E/S UDP, pygame)
         |    \                                   |
- server/sessions.py  server/throttle.py          |               per-player state, abuse limiters
+ server/sessions.py  server/throttle.py          |               estado por jogador, limitadores de abuso
         |                                         |
-        └──────────►  protocol/  ◄───────────────┘               wire contract: schemas, validation, codec
-        └──────────►  game/      (server only; client uses decode_body to render)   pure domain, no I/O
-                      config.py                                  settings dataclasses
+        └──────────►  protocol/  ◄───────────────┘               contrato na rede: schemas, validação, codec
+        └──────────►  game/      (só o servidor; o cliente usa decode_body para desenhar)   domínio puro, sem E/S
+                      config.py                                  dataclasses de configuração
 ```
 
-| Package | Single responsibility | Knows about |
+| Pacote | Responsabilidade única | Conhece |
 |---|---|---|
-| `protocol/` | `limits` constants, `errors` codes, `validators`, `schemas` (message catalogue), `codec` (bytes ⇄ validated dict) | nothing else |
-| `game/` | Rules and simulation (`world.py`); deterministic, testable without sockets | nothing else |
-| `server/sessions.py` | Session identity, token-bucket input limiter, input sequence check | nothing else |
-| `server/throttle.py` | Per-address ERROR budget, de-duplicated logging | nothing else |
-| `server/app.py` | UDP socket, receive/dispatch, tick loop, broadcast | protocol, game, sessions, throttle |
-| `client/network.py` | Client socket + thread + connection state machine (no pygame) | protocol |
-| `client/ui.py`, `client/bot.py` | Presentation / autopilot on top of `NetClient` | client.network, game (decode only) |
+| `protocol/` | constantes de `limits`, códigos de `errors`, `validators`, `schemas` (catálogo de mensagens), `codec` (bytes ⇄ dict validado) | nada além de si |
+| `game/` | Regras e simulação (`world.py`); determinístico, testável sem sockets | nada além de si |
+| `server/sessions.py` | Identidade da sessão, limitador token bucket de entradas, checagem de sequência | nada além de si |
+| `server/throttle.py` | Orçamento de ERROR por endereço, log sem repetição | nada além de si |
+| `server/app.py` | Socket UDP, recepção/despacho, loop de ticks, broadcast | protocol, game, sessions, throttle |
+| `client/network.py` | Socket + thread + máquina de estados da conexão (sem pygame) | protocol |
+| `client/ui.py`, `client/bot.py` | Apresentação / piloto automático sobre o `NetClient` | client.network, game (só decodificação) |
 
-## Concurrency model
+## Modelo de concorrência
 
-* **Server:** one thread. No shared mutable state, no locks. Socket reads use a timeout equal to the time until the next tick, so the loop wakes for either a datagram or a tick. At most 256 datagrams are drained per iteration, so a flood cannot starve the simulation.
-* **Client:** the UI thread renders; a network thread receives. They share only the latest validated snapshot and status, replaced under one `threading.Lock`; the UI copies it out. Sequence counters are touched under the same lock.
+* **Servidor:** uma única thread. Sem estado mutável compartilhado e sem locks. A leitura do socket usa um timeout igual ao tempo até o próximo tick, então o loop acorda tanto por um datagrama quanto por um tick. No máximo 256 datagramas são consumidos por iteração, de modo que um flood não consegue travar a simulação.
+* **Cliente:** a thread da UI desenha; uma thread de rede recebe. Elas compartilham apenas o último snapshot validado e o status, trocados sob um único `threading.Lock`; a UI copia o valor. Os contadores de sequência também são usados sob o mesmo lock.

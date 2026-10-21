@@ -1,27 +1,27 @@
-# Academic compliance traceability
+# Rastreabilidade com o enunciado
 
-Legend: ✅ yes · 🟡 partly · ⬜ no. **Implemented** = code exists; **Tested** = automated test or observed run; **Documented**; **Demonstrated** = shown live/with real evidence (still pending for everything that needs the team).
-Nothing is marked fully satisfied just because a file exists. Test results: `pytest` → 59 passed (observed).
+Legenda: ✅ sim · 🟡 em parte · ⬜ não. **Implementado** = o código existe; **Testado** = teste automatizado ou execução observada; **Documentado**; **Demonstrado** = mostrado ao vivo/com evidência real (ainda pendente em tudo que depende da equipe).
+Nada é marcado como totalmente atendido só porque existe um arquivo. Resultado dos testes: `pytest` → 59 passaram (observado).
 
-| Criterion (pts) | Implementation | Tests | Docs | Impl. | Tested | Docs | Demo | Gap |
+| Critério (pts) | Implementação | Testes | Docs | Impl. | Testado | Docs | Demo | Lacuna |
 |---|---|---|---|---|---|---|---|---|
-| Client-server functionality (2.0) | `server/app.py`, `game/world.py`, `client/network.py`, `client/ui.py` | `tests/server/test_server.py`, `tests/client/test_network.py`, `tests/game/test_world.py`, `tests/client/test_ui_smoke.py`; observed localhost run with 2 bots + UI | README §8 | ✅ | ✅ | ✅ | 🟡 | Human-played session and LAN run not done |
-| Socket implementation (1.5) | `server/app.py` (`socket`, `bind`, `recvfrom`, `sendto`, timeout loop), `client/network.py` (socket + thread) | port-in-use, shutdown-releases-socket, client close, many-clients-not-blocking tests | README §3–4, ARCHITECTURE | ✅ | ✅ | ✅ | ⬜ | Show code live |
-| Application protocol (1.5) | `snakenet/protocol/` (schemas, validators, codec, limits, errors) | `tests/protocol/test_codec.py` (18 malformed cases, size cap) + server tests | `docs/PROTOCOL.md`, README §5 | ✅ | ✅ | ✅ | ⬜ | — |
-| TCP/UDP justification (1.5) | design choice (UDP) + reliability layer: seq numbers, retries, idempotent JOIN/LEAVE | duplicate JOIN, duplicate/reordered INPUT, stale STATE tests | README §3, PROTOCOL §6, PRESENTATION | ✅ | ✅ | ✅ | ⬜ | Team must be able to defend it orally |
-| Error handling (1.0) | validation in `protocol/`, `server/app.py`, `throttle.py`, `sessions.py`, client state machine | malformed traffic, rate limits, expiry, full server, unavailable server, unresolvable host, lost→recover | README §6, PROTOCOL §4–5 | ✅ | ✅ | ✅ | ⬜ | Loss/latency not measured on a real impaired link |
-| Code organization (0.5) | layered packages, tests mirror packages | — | ARCHITECTURE (layering table) | ✅ | n/a | ✅ | n/a | — |
-| Documentation (0.5) | README, PROTOCOL, ARCHITECTURE, WIRESHARK, PRESENTATION, PLAN, this file | — | — | ✅ | n/a | 🟡 | n/a | Team names are placeholders |
-| Presentation (0.5) | plan in `docs/PRESENTATION.md` | — | ✅ | 🟡 | n/a | ✅ | ⬜ | Rehearsal pending |
-| Conceptual understanding (1.0) | Q&A prepared in PRESENTATION.md | — | ✅ | n/a | n/a | ✅ | ⬜ | Every member must study it |
+| Funcionamento cliente-servidor (2,0) | `server/app.py`, `game/world.py`, `client/network.py`, `client/ui.py` | `tests/server/test_server.py`, `tests/client/test_network.py`, `tests/game/test_world.py`, `tests/client/test_ui_smoke.py`; execução observada em localhost com 2 bots + UI | README §8 | ✅ | ✅ | ✅ | 🟡 | Partida jogada por humano e teste em LAN pendentes |
+| Implementação dos sockets (1,5) | `server/app.py` (`socket`, `bind`, `recvfrom`, `sendto`, loop com timeout), `client/network.py` (socket + thread) | testes de porta em uso, liberação do socket ao encerrar, `close` do cliente, muitos clientes sem travar o loop | README §3–4, ARCHITECTURE | ✅ | ✅ | ✅ | ⬜ | Mostrar o código ao vivo |
+| Protocolo da aplicação (1,5) | `snakenet/protocol/` (schemas, validators, codec, limits, errors) | `tests/protocol/test_codec.py` (18 casos malformados, limite de tamanho) + testes do servidor | `docs/PROTOCOL.md`, README §5 | ✅ | ✅ | ✅ | ⬜ | — |
+| Justificativa TCP/UDP (1,5) | escolha de projeto (UDP) + camada de confiabilidade: números de sequência, retentativas, JOIN/LEAVE idempotentes | testes de JOIN duplicado, INPUT duplicado/fora de ordem, STATE antigo | README §3, PROTOCOL §6, PRESENTATION | ✅ | ✅ | ✅ | ⬜ | A equipe precisa saber defender oralmente |
+| Tratamento de erros (1,0) | validação em `protocol/`, `server/app.py`, `throttle.py`, `sessions.py`, máquina de estados do cliente | tráfego malformado, limites de taxa, expiração, servidor cheio, servidor indisponível, host não resolvido, perda→recuperação | README §6, PROTOCOL §4–5 | ✅ | ✅ | ✅ | ⬜ | Perda/latência não medidas em enlace real degradado |
+| Organização do código (0,5) | pacotes em camadas; os testes espelham os pacotes | — | ARCHITECTURE (tabela de camadas) | ✅ | n/a | ✅ | n/a | — |
+| Documentação (0,5) | README, PROTOCOL, ARCHITECTURE, WIRESHARK, PRESENTATION, PLAN, este arquivo | — | — | ✅ | n/a | 🟡 | n/a | Nomes da equipe são placeholders |
+| Apresentação (0,5) | plano em `docs/PRESENTATION.md` | — | ✅ | 🟡 | n/a | ✅ | ⬜ | Ensaio pendente |
+| Domínio conceitual (1,0) | Perguntas e respostas preparadas em PRESENTATION.md | — | ✅ | n/a | n/a | ✅ | ⬜ | Todos os integrantes precisam estudar |
 
-## Mandatory deliverables
-| Deliverable | State |
+## Entregas obrigatórias
+| Entrega | Estado |
 |---|---|
-| 1. Source code (client + server) | ✅ present, tested |
-| 2. README with all required items (description, members, architecture, TCP/UDP, justification, IP/port, protocol, messages, run instructions) | ✅ present; **members are placeholders** |
-| 3. Architecture diagram | ✅ [ARCHITECTURE.md](ARCHITECTURE.md) (Mermaid) |
-| 4. Wireshark capture and analysis | ⬜ **not delivered yet** — procedure and filters ready in [WIRESHARK.md](WIRESHARK.md); must be captured on a machine with capture rights |
+| 1. Código-fonte (cliente + servidor) | ✅ presente, testado |
+| 2. README com todos os itens exigidos (descrição, integrantes, arquitetura, TCP/UDP, justificativa, IP/porta, protocolo, mensagens, instruções de execução) | ✅ presente; **integrantes são placeholders** |
+| 3. Diagrama da arquitetura | ✅ [ARCHITECTURE.md](ARCHITECTURE.md) (Mermaid) |
+| 4. Captura de tráfego e análise no Wireshark | ⬜ **ainda não entregue** — procedimento e filtros prontos em [WIRESHARK.md](WIRESHARK.md); precisa ser capturada em uma máquina com permissão de captura |
 
-## The 10 questions from the assignment → where answered
-1 problem → README §1 · 2 processes → README §2 · 3 how they communicate → ARCHITECTURE sequence + PROTOCOL · 4 transport → README §3 · 5 why suitable → README §3 / PRESENTATION · 6 application protocol → PROTOCOL.md · 7 messages → README §5 / PROTOCOL §4 · 8 what if the other protocol → README §3 / PRESENTATION · 9–10 errors and handling → README §6.
+## As 10 perguntas do enunciado → onde são respondidas
+1 problema → README §1 · 2 processos → README §2 · 3 como se comunicam → sequência em ARCHITECTURE + PROTOCOL · 4 transporte → README §3 · 5 por que é adequado → README §3 / PRESENTATION · 6 protocolo da aplicação → PROTOCOL.md · 7 mensagens → README §5 / PROTOCOL §4 · 8 e se fosse o outro protocolo → README §3 / PRESENTATION · 9–10 erros e tratamento → README §6.
