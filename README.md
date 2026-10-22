@@ -139,6 +139,6 @@ Captura e análise no Wireshark: **[docs/WIRESHARK.md](docs/WIRESHARK.md)** (fil
 | Testes automatizados                                                                                  | **59 passaram** (`pytest`, ~5 s). Mapeamento em COMPLIANCE.md                                     |
 | Execução real: servidor + 2 bots + cliente com UI sem janela em localhost, parada limpa com SIGTERM | Observado OK (captura de tela: `evidence/screenshot-headless.png`)                                      |
 | Jogo interativo com humano em janela real                                                             | **Ainda não feito** (precisa de sessão gráfica)                                                  |
-| Teste em LAN entre duas máquinas                                                                     | **Ainda não feito**                                                                                |
-| Captura do Wireshark | **Captura real em loopback feita** (`evidence/snakenet.pcapng`, 558 pacotes; análise em docs/WIRESHARK.md §4). **Faltam** telas da interface gráfica e captura em rede real |
+| Teste entre duas máquinas | **Feito em 22/10/2026** pelo hotspot do celular (servidor `10.209.198.22`, cliente `10.209.198.154`); tráfego capturado |
+| Captura do Wireshark | **Duas capturas reais feitas**: loopback (558 pacotes) e rede real com 2 computadores (726 pacotes, 22/10/2026). Análise em docs/WIRESHARK.md §4–5. **Faltam** telas da interface gráfica e experimento de perda |
 | Experimento de perda de pacotes (`tc netem`)                                                        | Não executado                                                                                            |

@@ -31,10 +31,12 @@ Abrir com: `wireshark evidence/snakenet.pcapng` (se der "sem permissão", use `n
 
 **Números para citar:** 2 clientes, 278 pacotes com cada um; `INPUT` 324 pacotes; `STATE` 192 (96 por cliente); `PING`/`PONG` 16/16 (a cada ~1,67 s); `LEAVE` 4 (2 por cliente, enviados em dobro). Fonte: tabela em [WIRESHARK.md](WIRESHARK.md) §4.
 
-**Limites da evidência (dizer com honestidade se perguntarem):** foi no loopback, então os IPs de origem e destino são iguais (`127.0.0.1`) e não houve perda de pacotes. Um teste com dois computadores e outro com perda simulada (`tc netem`) ainda não foram feitos.
+**Captura em rede real (dois computadores):** `evidence/snakenet-rede-real.pcapng` — 726 pacotes em 60 s, servidor `10.209.198.22:5000` e cliente `10.209.198.154:36099` (hotspot do celular). Filtro: `udp.port == 5000`. Mostrar: IPs de origem e destino diferentes; `STATE` 480 pacotes (8/s, `seq` 505→984 sem lacunas); `INPUT` 176 pacotes em pares com o mesmo `seq`; `PING`/`PONG` ≈ a cada 1,7 s. Detalhes e ressalvas em [WIRESHARK.md](WIRESHARK.md) §5.
+
+**Limites da evidência (dizer com honestidade se perguntarem):** a captura de loopback usa `127.0.0.1` nos dois lados. A de rede real foi feita **no servidor**, então mostra o que ele enviou; perda que ocorra depois, no hotspot, não aparece ali. A captura de rede real também não tem `JOIN`/`WELCOME`/`LEAVE` (a sessão já estava aberta); esses estão na de loopback. O experimento com perda simulada (`tc netem`) não foi feito.
 
 ### Para a demonstração ao vivo e a captura em rede real (fazer antes de apresentar)
-- [ ] Os dois notebooks no **mesmo hotspot do celular** (o Wi-Fi da faculdade pode isolar os clientes: `ping` falha com "destino inalcançável").
+- [x] (feito em 22/10) Os dois notebooks no **mesmo hotspot do celular** (o Wi-Fi da faculdade pode isolar os clientes: `ping` falha com "destino inalcançável").
 - [ ] Servidor no notebook do Jeiel: `.venv/bin/python -m snakenet.server --host 0.0.0.0 --port 5000`; anotar o IP com `ip -4 addr show wlp4s0`.
 - [ ] Maria roda: `python -m snakenet.client --host IP_DO_SERVIDOR --port 5000 --name maria` (clone novo do repositório + `pip install -r requirements.txt`).
 - [ ] Firewall do servidor liberando UDP 5000 (`sudo nft insert rule inet filter input udp dport 5000 accept`).

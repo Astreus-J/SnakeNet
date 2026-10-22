@@ -21,7 +21,7 @@ Nada é marcado como totalmente atendido só porque existe um arquivo. Resultado
 | 1. Código-fonte (cliente + servidor) | ✅ presente, testado |
 | 2. README com todos os itens exigidos (descrição, integrantes, arquitetura, TCP/UDP, justificativa, IP/porta, protocolo, mensagens, instruções de execução) | ✅ presente; integrantes listados (papéis a definir) |
 | 3. Diagrama da arquitetura | ✅ [ARCHITECTURE.md](ARCHITECTURE.md) (Mermaid) |
-| 4. Captura de tráfego e análise no Wireshark | 🟡 **captura real em loopback existe** (`evidence/snakenet.pcapng`, 558 pacotes, analisada com tshark — ver [WIRESHARK.md](WIRESHARK.md) §4). **Faltam:** telas do Wireshark, captura em rede real entre duas máquinas e experimento de perda |
+| 4. Captura de tráfego e análise no Wireshark | 🟡 **duas capturas reais**: loopback (`evidence/snakenet.pcapng`, 558 pacotes, inclui JOIN/WELCOME/LEAVE/ERROR) e **rede real com 2 computadores** (`evidence/snakenet-rede-real.pcapng`, 726 pacotes) — ver [WIRESHARK.md](WIRESHARK.md) §4–5. **Faltam:** telas da interface do Wireshark e experimento de perda |
 
 ## As 10 perguntas do enunciado → onde são respondidas
 1 problema → README §1 · 2 processos → README §2 · 3 como se comunicam → sequência em ARCHITECTURE + PROTOCOL · 4 transporte → README §3 · 5 por que é adequado → README §3 / PRESENTATION · 6 protocolo da aplicação → PROTOCOL.md · 7 mensagens → README §5 / PROTOCOL §4 · 8 e se fosse o outro protocolo → README §3 / PRESENTATION · 9–10 erros e tratamento → README §6.

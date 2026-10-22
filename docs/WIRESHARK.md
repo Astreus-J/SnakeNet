@@ -68,3 +68,24 @@ Servidor na porta **5100** (não a 5000, que estava ocupada por outro servidor e
 
 Comandos usados para extrair esses números: `tshark -r evidence/snakenet.pcapng -q -z conv,udp` (conversas) e
 `tshark -r evidence/snakenet.pcapng -T fields -e udp.srcport -e udp.dstport -e data.data` (payloads, decodificados em JSON).
+
+## 5. Captura em rede real, dois computadores (hotspot do celular)
+
+Arquivo: [`evidence/snakenet-rede-real.pcapng`](../evidence/snakenet-rede-real.pcapng) — 726 pacotes, **60 s**, capturado em **22/10/2026** com `dumpcap`
+na interface Wi-Fi `wlp4s0` **do computador do servidor**, filtro de captura `udp port 5000`, 0 pacotes descartados pela interface.
+O servidor já estava rodando (14 min) e a sessão já estava aberta quando a captura começou; por isso **não aparecem `JOIN`, `WELCOME`, `LEAVE` nem `ERROR`** neste arquivo (eles estão na captura de loopback, §4).
+
+| Item | Valor |
+|---|---|
+| Servidor | `10.209.198.22:5000` |
+| Cliente remoto (notebook da colega) | `10.209.198.154:36099` (porta efêmera) |
+| Rede | hotspot do celular, `10.209.198.0/24` (dois IPs diferentes, mesma sub-rede) |
+| Cliente → servidor | `INPUT` 176 pacotes (64 B; 88 `seq` únicos, ou seja, **2 cópias de cada tecla**) + `PING` 35 pacotes (70–72 B) |
+| Servidor → cliente | `STATE` 480 pacotes (404–475 B, mediana 438 B) + `PONG` 35 pacotes (57–59 B) |
+| Taxa de `STATE` | 480 em 60 s = **8/s**; intervalo médio 0,125 s, máximo 0,126 s |
+| Sequência do `STATE` | `seq` 505 → 984, **0 faltando, 0 duplicados, ordem crescente** |
+| `PING` | 35 em 60 s ≈ 1 a cada 1,7 s (`timeout/3`) |
+
+Como interpretar (e limites desta evidência):
+* A captura foi feita **no servidor**. Ela mostra o que o servidor *enviou* e *recebeu*. Um pacote perdido **depois** de sair do servidor (no hotspot ou no Wi-Fi do cliente) **apareceria como entregue aqui**. A ausência de lacunas no `seq` mostra que o servidor enviou tudo em ordem, não que o cliente recebeu tudo. Para medir perda de verdade, compare com um contador no cliente (`stale` e `rx` na barra lateral) ou capture também no notebook do cliente.
+* O intervalo entre `PING` e `PONG` visto aqui (0,22–0,45 ms) é só o **tempo de resposta do servidor**, não o RTT da rede. O RTT real aparece como "ping" na barra lateral do cliente.
