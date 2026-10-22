@@ -115,7 +115,7 @@ tools/demo_local.sh            # servidor + 2 bots
 ```
 
 **Vários clientes no mesmo computador:** rode o comando do cliente em vários terminais; cada um recebe uma porta de origem efêmera própria.
-**Em rede local:** na máquina do servidor, rode com `--host 0.0.0.0 --port 5000`, descubra o IP dela na LAN (`ip addr` / `ipconfig`), libere a porta **UDP 5000** no firewall e, nas outras máquinas, rode `python -m snakenet.client --host <IP_DO_SERVIDOR> --port 5000`. *O jogo em LAN entre duas máquinas reais ainda não foi testado; jogo pela internet não é suportado nem foi testado.*
+**Em rede local:** na máquina do servidor, rode com `--host 0.0.0.0 --port 5000`, descubra o IP dela na LAN (`ip addr` / `ipconfig`), libere a porta **UDP 5000** no firewall e, nas outras máquinas, rode `python -m snakenet.client --host <IP_DO_SERVIDOR> --port 5000`. *Testado em 22/10/2026 com duas máquinas reais no mesmo hotspot de celular (servidor `10.209.198.22`, cliente `10.209.198.154`); a rede Wi-Fi da faculdade pode isolar os clientes e impedir a conexão. Jogo pela internet não é suportado nem foi testado.*
 
 ## 9. Testes e Wireshark
 
@@ -138,7 +138,7 @@ Captura e análise no Wireshark: **[docs/WIRESHARK.md](docs/WIRESHARK.md)** (fil
 | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Testes automatizados                                                                                  | **59 passaram** (`pytest`, ~5 s). Mapeamento em COMPLIANCE.md                                     |
 | Execução real: servidor + 2 bots + cliente com UI sem janela em localhost, parada limpa com SIGTERM | Observado OK (captura de tela: `evidence/screenshot-headless.png`)                                      |
-| Jogo interativo com humano em janela real                                                             | **Ainda não feito** (precisa de sessão gráfica)                                                  |
+| Jogo em duas máquinas (janela real) | **Executado em 22/10/2026** (servidor + cliente remoto; teclas do cliente remoto aparecem na captura). Impressão de jogabilidade (velocidade) é subjetiva e não foi medida |
 | Teste entre duas máquinas | **Feito em 22/10/2026** pelo hotspot do celular (servidor `10.209.198.22`, cliente `10.209.198.154`); tráfego capturado |
 | Captura do Wireshark | **Feita**: 3 capturas reais (loopback e rede real com 2 computadores) + 7 telas do Wireshark em `evidence/`. Análise em docs/WIRESHARK.md §4–7. Falta o experimento de perda de pacotes |
 | Experimento de perda de pacotes (`tc netem`)                                                        | Não executado                                                                                            |

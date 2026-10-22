@@ -62,7 +62,7 @@ Servidor na porta **5100** (não a 5000, que estava ocupada por outro servidor e
 | ERROR (S→C) | 1 pacote, 78 B: `{"code":"BAD_JSON","msg":"datagram is not valid UTF-8 JSON"}` em resposta ao `hello` (5 B) |
 | Perda de `STATE` | **0** (seq 1…96 completo e crescente nos dois clientes) — loopback não perde pacotes |
 | Experimento de perda (`tc netem`) | **não executado** |
-| Telas do Wireshark | **ainda não tiradas** |
+| Telas do Wireshark | **tiradas**: ver §7 (`evidence/wireshark-01…07-*.png`) |
 
 Comandos usados para extrair esses números: `tshark -r evidence/snakenet.pcapng -q -z conv,udp` (conversas) e
 `tshark -r evidence/snakenet.pcapng -T fields -e udp.srcport -e udp.dstport -e data.data` (payloads, decodificados em JSON).
