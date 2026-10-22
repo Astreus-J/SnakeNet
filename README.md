@@ -140,5 +140,5 @@ Captura e análise no Wireshark: **[docs/WIRESHARK.md](docs/WIRESHARK.md)** (fil
 | Execução real: servidor + 2 bots + cliente com UI sem janela em localhost, parada limpa com SIGTERM | Observado OK (captura de tela: `evidence/screenshot-headless.png`)                                      |
 | Jogo interativo com humano em janela real                                                             | **Ainda não feito** (precisa de sessão gráfica)                                                  |
 | Teste em LAN entre duas máquinas                                                                     | **Ainda não feito**                                                                                |
-| Captura / telas do Wireshark                                                                          | **Ainda não feito** — bloqueado no ambiente de desenvolvimento; procedimento em docs/WIRESHARK.md |
+| Captura do Wireshark | **Captura real em loopback feita** (`evidence/snakenet.pcapng`, 558 pacotes; análise em docs/WIRESHARK.md §4). **Faltam** telas da interface gráfica e captura em rede real |
 | Experimento de perda de pacotes (`tc netem`)                                                        | Não executado                                                                                            |

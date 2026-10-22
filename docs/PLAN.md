@@ -36,7 +36,7 @@ Prazo: **28/10/2026**. Fonte para sincronizar: [`project-management/plane/plan.j
 | SN-13 | Especificação do protocolo | ✅ feito |
 | SN-14 | Diagrama da arquitetura | ✅ feito |
 | SN-15 | Guia do Wireshark e script auxiliar de captura | ✅ feito |
-| SN-16 | Captura real no Wireshark e telas em evidence/ | 🧍 pendente (precisa da equipe) |
+| SN-16 | Captura real no Wireshark e telas em evidence/ | 🟡 captura em loopback feita; faltam telas e captura em rede real |
 | SN-17 | Teste em LAN com uma segunda máquina (registrar IPs/portas reais) | 🧍 pendente (precisa da equipe) |
 | SN-18 | Tabela de rastreabilidade com o enunciado | ✅ feito |
 
@@ -51,7 +51,7 @@ Prazo: **28/10/2026**. Fonte para sincronizar: [`project-management/plane/plan.j
 | SN-23 | Opcional: boost, som, menu (só se todo o resto estiver pronto) | ⬜ a fazer |
 
 ## Trabalho restante (tudo depende da equipe)
-1. **SN-16 Captura no Wireshark** — única entrega obrigatória que falta; siga [WIRESHARK.md](WIRESHARK.md).
+1. **SN-16 Wireshark** — a captura em loopback existe; faltam as telas da interface e, idealmente, uma captura em rede real ([WIRESHARK.md](WIRESHARK.md)).
 2. SN-17 teste em LAN com duas máquinas, SN-20 ensaio, SN-22 nomes da equipe, SN-21 verificação em venv limpo.
 
 ## Riscos
