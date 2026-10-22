@@ -140,5 +140,5 @@ Captura e análise no Wireshark: **[docs/WIRESHARK.md](docs/WIRESHARK.md)** (fil
 | Execução real: servidor + 2 bots + cliente com UI sem janela em localhost, parada limpa com SIGTERM | Observado OK (captura de tela: `evidence/screenshot-headless.png`)                                      |
 | Jogo interativo com humano em janela real                                                             | **Ainda não feito** (precisa de sessão gráfica)                                                  |
 | Teste entre duas máquinas | **Feito em 22/10/2026** pelo hotspot do celular (servidor `10.209.198.22`, cliente `10.209.198.154`); tráfego capturado |
-| Captura do Wireshark | **Três capturas reais feitas**: loopback (558 pacotes) e rede real com 2 computadores (726 e 1119 pacotes, 22/10/2026). Análise em docs/WIRESHARK.md §4–6. **Faltam** telas da interface gráfica e experimento de perda |
+| Captura do Wireshark | **Feita**: 3 capturas reais (loopback e rede real com 2 computadores) + 7 telas do Wireshark em `evidence/`. Análise em docs/WIRESHARK.md §4–7. Falta o experimento de perda de pacotes |
 | Experimento de perda de pacotes (`tc netem`)                                                        | Não executado                                                                                            |

@@ -18,6 +18,8 @@ Apresentadora: **Maria Pereira**. Apoio na demonstração: Jeiel Santos.
 Arquivo: `evidence/snakenet.pcapng` — captura real feita em 22/10/2026 no loopback, filtro de captura `udp port 5100`, 558 pacotes.
 Abrir com: `wireshark evidence/snakenet.pcapng` (se der "sem permissão", use `newgrp wireshark` antes, ou faça logout/login).
 
+**Telas prontas (backup caso o Wireshark falhe ao vivo):** `evidence/wireshark-01…07-*.png` — lista e descrição em [WIRESHARK.md](WIRESHARK.md) §7.
+
 **Roteiro de 1 minuto no Wireshark** (aplique o filtro na barra superior):
 
 | Passo | Filtro | O que apontar |

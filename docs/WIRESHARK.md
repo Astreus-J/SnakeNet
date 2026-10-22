@@ -1,10 +1,8 @@
 # Guia de captura e análise no Wireshark
 
-> **Estado: existe uma captura real em loopback** — [`evidence/snakenet.pcapng`](../evidence/snakenet.pcapng) (558 pacotes, feita com
-> `dumpcap` em 22/10/2026 e analisada com `tshark`). **Ainda faltam:** telas do Wireshark (interface gráfica), captura em rede real entre duas
-> máquinas e o experimento de perda de pacotes. Nada foi inventado; a tabela da seção 4 vem do arquivo. Para a apresentação,
-> abra o `.pcapng` no Wireshark e tire as telas, ou refaça a captura seguindo o procedimento abaixo.
-> (`evidence/screenshot-headless.png` é uma tela do *cliente do jogo*, não do Wireshark.)
+> **Estado: existem capturas reais (loopback e rede real com 2 computadores) e 7 telas do Wireshark** — seções 4 a 7.
+> **Ainda faltam:** o experimento de perda de pacotes e `LEAVE`/`ERROR` capturados em rede real (só existem no loopback).
+> Nada foi inventado; as tabelas vêm dos arquivos `.pcapng` (analisados com `tshark`).
 
 > **Permissão no Linux:** se o Wireshark disser "Você não tem permissão para capturar", seu usuário precisa estar no grupo `wireshark`
 > (`sudo usermod -aG wireshark $USER`) **e** a sessão precisa ser nova (logout/login). Sem reiniciar a sessão, abra o Wireshark com
@@ -109,3 +107,21 @@ O `STATE` continuou sem lacunas durante e depois das reconexões.
 
 **Ainda não capturado em rede real:** `LEAVE` (nenhum cliente saiu com `Esc` durante a janela) e `ERROR`. Ambos estão na captura de loopback (§4).
 A ressalva da §5 continua valendo: a captura é do lado do servidor e não mede perda que ocorra depois que o pacote sai dele.
+
+## 7. Telas do Wireshark (evidências)
+
+Geradas em 22/10/2026 abrindo os `.pcapng` no Wireshark 4.7.4 e fotografando **só a janela do Wireshark** (`spectacle`), sem editar. Em todas, a lista de pacotes mostra
+IP e porta de origem/destino, o painel de detalhes mostra *Ethernet II → IPv4 → UDP → Data* e o painel de bytes mostra o **JSON em texto** (o Wireshark o chama de "Data" porque não tem dissector para o protocolo próprio).
+
+| Tela | Captura | Filtro de exibição | O que mostra |
+|---|---|---|---|
+| [01](../evidence/wireshark-01-visao-geral-rede-real.png) | rede real | `udp.port == 5000` | Visão geral: `10.209.198.22:5000` ⇄ `10.209.198.154:36099`; `STATE` de 496 B (Len=454) a cada ~0,125 s e `INPUT` de 106 B (Len=64) em pares; no painel de bytes, o JSON do `STATE` |
+| [02](../evidence/wireshark-02-join-rede-real.png) | rede real | `frame contains "\"t\":\"JOIN\""` | Os 3 `JOIN` (#684, #705, #715), `36099 → 5000`, Len=34; bytes: `{"v":1,"t":"JOIN","name":"zeninn"}` |
+| [03](../evidence/wireshark-03-welcome-rede-real.png) | rede real | `frame contains "\"t\":\"WELCOME\""` | Os 3 `WELCOME` (#685, #706, #716), `5000 → 36099`, Len=98; bytes: `pid:1`, `tok`, arena 60×40, `tick_rate` 8.0, `timeout` 5.0 |
+| [04](../evidence/wireshark-04-input-em-pares-rede-real.png) | rede real | `frame contains "\"t\":\"INPUT\""` | 286 `INPUT` exibidos; #3 e #4 chegam com ~0,9 µs de diferença (par com o mesmo `seq`); bytes: `{"v":1,"t":"INPUT","tok":…,"seq":493,"dir":"L"}` |
+| [05](../evidence/wireshark-05-state-rede-real.png) | rede real | `frame contains "\"t\":\"STATE\""` | Snapshots do servidor (`seq`, `tick`, cobras, comida) a 8/s |
+| [06](../evidence/wireshark-06-error-bad-json-loopback.png) | loopback | `frame contains "\"t\":\"ERROR\""` | `ERROR` com `code:"BAD_JSON"` (`5100 → 35367`, Len=78) em resposta ao `hello` |
+| [07](../evidence/wireshark-07-leave-loopback.png) | loopback | `frame contains "\"t\":\"LEAVE\""` | 4 `LEAVE` (2 de cada cliente, Len=44), enviados em dobro |
+
+Limites: as telas 06 e 07 são do **loopback** (`127.0.0.1`, porta 5100). Em rede real ainda não há `LEAVE` nem `ERROR` capturados. A captura de rede real foi feita no servidor (ver ressalva da §5).
+As telas mostram os painéis de detalhes **recolhidos**; para expandir, clique no pacote e use *Análise → Expandir subárvores*.

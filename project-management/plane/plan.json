@@ -169,10 +169,10 @@
       "key": "SN-16",
       "title": "SN-16 Captura real no Wireshark e telas em evidence/",
       "cycle": "C3",
-      "state": "todo",
+      "state": "done",
       "priority": "urgent",
-      "description": "Captura real em loopback feita (evidence/snakenet.pcapng, 558 pacotes). Faltam: telas do Wireshark, captura em rede real e experimento de perda.",
-      "needs_human": true
+      "description": "Feito: 3 capturas reais e 7 telas do Wireshark em evidence/. Falta só o experimento de perda (opcional).",
+      "needs_human": false
     },
     {
       "key": "SN-17",
