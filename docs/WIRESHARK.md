@@ -1,10 +1,14 @@
 # Guia de captura e análise no Wireshark
 
-> **Estado: a captura AINDA NÃO foi feita.** O ambiente de desenvolvimento não tinha permissão de captura (sem `tshark`/`tcpdump`,
-> sem `sudo`, sockets raw negados), então não existe `.pcapng` nem tela do Wireshark. Nada aqui foi inventado:
-> siga o procedimento na sua máquina, salve os arquivos em [`evidence/`](../evidence/) e depois preencha a tabela
-> "Observado" no final com o que você realmente viu.
-> (`evidence/screenshot-headless.png` é uma tela do *cliente do jogo*, não uma captura do Wireshark.)
+> **Estado: existe uma captura real em loopback** — [`evidence/snakenet.pcapng`](../evidence/snakenet.pcapng) (558 pacotes, feita com
+> `dumpcap` em 22/10/2026 e analisada com `tshark`). **Ainda faltam:** telas do Wireshark (interface gráfica), captura em rede real entre duas
+> máquinas e o experimento de perda de pacotes. Nada foi inventado; a tabela da seção 4 vem do arquivo. Para a apresentação,
+> abra o `.pcapng` no Wireshark e tire as telas, ou refaça a captura seguindo o procedimento abaixo.
+> (`evidence/screenshot-headless.png` é uma tela do *cliente do jogo*, não do Wireshark.)
+
+> **Permissão no Linux:** se o Wireshark disser "Você não tem permissão para capturar", seu usuário precisa estar no grupo `wireshark`
+> (`sudo usermod -aG wireshark $USER`) **e** a sessão precisa ser nova (logout/login). Sem reiniciar a sessão, abra o Wireshark com
+> `newgrp wireshark` seguido de `wireshark`.
 
 ## 1. Procedimento reproduzível (mesma máquina, loopback)
 
@@ -39,15 +43,28 @@ Em LAN: suba o servidor com `--host 0.0.0.0`, capture na interface real (por exe
 * **Fluxo da sessão:** `JOIN` → `WELCOME` (traz `pid`, `tok`) → `STATE` contínuo → `PING`/`PONG` a cada `timeout/3` ≈ 1,67 s → `LEAVE` ×2.
 * **Perda / atraso de pacotes (experimento opcional):** no Linux, `sudo tc qdisc add dev lo root netem loss 20% delay 80ms` (desfaça com `sudo tc qdisc del dev lo root`). Depois procure lacunas no `STATE.seq` (use *Statistics → I/O Graphs* ou compare o `seq` de pacotes sucessivos) e, na barra lateral do cliente, observe `stale` ou o ping mudarem. O jogo continua porque os snapshots seguintes substituem os perdidos.
 
-## 4. Observado (preencha com a sua captura real)
+## 4. Observado (da captura real `evidence/snakenet.pcapng`)
+
+Capturado em **22/10/2026**, interface **loopback (`lo`)**, filtro de captura `udp port 5100`, duração 12 s de tráfego, **558 pacotes**.
+Servidor na porta **5100** (não a 5000, que estava ocupada por outro servidor em uso). Dois bots (`maria` e `jeiel`) jogaram 12 s e foi enviado um datagrama inválido (`hello`) com `nc -u`.
 
 | Item | Valor |
 |---|---|
-| Data / máquina / interface | _TODO_ |
-| IP:porta do servidor | _TODO_ |
-| IP:porta do cliente 1 | _TODO_ |
-| IP:porta do cliente 2 | _TODO_ |
-| Tamanho típico do STATE | _TODO_ |
-| Tamanho típico do INPUT | _TODO_ |
-| Resultado do experimento de perda de pacotes | _TODO / não executado_ |
-| Arquivos salvos | _TODO (`evidence/...`)_ |
+| IP:porta do servidor | `127.0.0.1:5100` |
+| Cliente 1 (`maria`) | `127.0.0.1:57362` (porta efêmera) |
+| Cliente 2 (`jeiel`) | `127.0.0.1:48344` (porta efêmera) |
+| Origem do datagrama inválido | `127.0.0.1:35367` |
+| Conversas UDP | 3 conversas: 278 pacotes com cada cliente (105 cliente→servidor, 173 servidor→cliente) + 2 do datagrama inválido |
+| JOIN (C→S) | 2 pacotes, 33 B de payload |
+| WELCOME (S→C) | 2 pacotes, 98 B |
+| INPUT (C→S) | 324 pacotes, 62–63 B — **sempre em pares com o mesmo `seq`** (ex.: #11 e #12, `seq=1`) |
+| STATE (S→C) | 192 pacotes (96 por cliente = 8/s × 12 s), 409–435 B (mediana 418 B, 2 cobras) |
+| PING / PONG | 16 / 16 pacotes (≈ 1 a cada 1,67 s por cliente), 71–72 B / 56–58 B |
+| LEAVE (C→S) | 4 pacotes (2 por cliente, 44 B) |
+| ERROR (S→C) | 1 pacote, 78 B: `{"code":"BAD_JSON","msg":"datagram is not valid UTF-8 JSON"}` em resposta ao `hello` (5 B) |
+| Perda de `STATE` | **0** (seq 1…96 completo e crescente nos dois clientes) — loopback não perde pacotes |
+| Experimento de perda (`tc netem`) | **não executado** |
+| Telas do Wireshark | **ainda não tiradas** |
+
+Comandos usados para extrair esses números: `tshark -r evidence/snakenet.pcapng -q -z conv,udp` (conversas) e
+`tshark -r evidence/snakenet.pcapng -T fields -e udp.srcport -e udp.dstport -e data.data` (payloads, decodificados em JSON).

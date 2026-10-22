@@ -171,7 +171,7 @@
       "cycle": "C3",
       "state": "todo",
       "priority": "urgent",
-      "description": "Bloqueado no ambiente de desenvolvimento (sem permissão de captura). Siga docs/WIRESHARK.md na sua máquina e preencha a tabela Observado.",
+      "description": "Captura real em loopback feita (evidence/snakenet.pcapng, 558 pacotes). Faltam: telas do Wireshark, captura em rede real e experimento de perda.",
       "needs_human": true
     },
     {
