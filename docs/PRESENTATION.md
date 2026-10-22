@@ -33,7 +33,9 @@ Abrir com: `wireshark evidence/snakenet.pcapng` (se der "sem permissão", use `n
 
 **Captura em rede real (dois computadores):** `evidence/snakenet-rede-real.pcapng` — 726 pacotes em 60 s, servidor `10.209.198.22:5000` e cliente `10.209.198.154:36099` (hotspot do celular). Filtro: `udp.port == 5000`. Mostrar: IPs de origem e destino diferentes; `STATE` 480 pacotes (8/s, `seq` 505→984 sem lacunas); `INPUT` 176 pacotes em pares com o mesmo `seq`; `PING`/`PONG` ≈ a cada 1,7 s. Detalhes e ressalvas em [WIRESHARK.md](WIRESHARK.md) §5.
 
-**Limites da evidência (dizer com honestidade se perguntarem):** a captura de loopback usa `127.0.0.1` nos dois lados. A de rede real foi feita **no servidor**, então mostra o que ele enviou; perda que ocorra depois, no hotspot, não aparece ali. A captura de rede real também não tem `JOIN`/`WELCOME`/`LEAVE` (a sessão já estava aberta); esses estão na de loopback. O experimento com perda simulada (`tc netem`) não foi feito.
+**Segunda captura em rede real, com `JOIN`/`WELCOME`:** `evidence/snakenet-rede-real-join.pcapng` — 1119 pacotes em 90 s. Filtro `frame contains "\"t\":\"JOIN\""`: três `JOIN` do mesmo `10.209.198.154:36099` (#684, #705, #715) e três `WELCOME` **idênticos** (`pid:1`, mesmo `tok`) — prova de que o `JOIN` repetido é idempotente e não duplica o jogador. `STATE` seq 2714→3434 sem lacunas.
+
+**Limites da evidência (dizer com honestidade se perguntarem):** a captura de loopback usa `127.0.0.1` nos dois lados. A de rede real foi feita **no servidor**, então mostra o que ele enviou; perda que ocorra depois, no hotspot, não aparece ali. Em rede real ainda não há `LEAVE` nem `ERROR` (só na captura de loopback). O experimento com perda simulada (`tc netem`) não foi feito.
 
 ### Para a demonstração ao vivo e a captura em rede real (fazer antes de apresentar)
 - [x] (feito em 22/10) Os dois notebooks no **mesmo hotspot do celular** (o Wi-Fi da faculdade pode isolar os clientes: `ping` falha com "destino inalcançável").

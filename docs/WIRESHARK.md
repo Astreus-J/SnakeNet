@@ -89,3 +89,23 @@ O servidor já estava rodando (14 min) e a sessão já estava aberta quando a ca
 Como interpretar (e limites desta evidência):
 * A captura foi feita **no servidor**. Ela mostra o que o servidor *enviou* e *recebeu*. Um pacote perdido **depois** de sair do servidor (no hotspot ou no Wi-Fi do cliente) **apareceria como entregue aqui**. A ausência de lacunas no `seq` mostra que o servidor enviou tudo em ordem, não que o cliente recebeu tudo. Para medir perda de verdade, compare com um contador no cliente (`stale` e `rx` na barra lateral) ou capture também no notebook do cliente.
 * O intervalo entre `PING` e `PONG` visto aqui (0,22–0,45 ms) é só o **tempo de resposta do servidor**, não o RTT da rede. O RTT real aparece como "ping" na barra lateral do cliente.
+
+## 6. Segunda captura em rede real — com `JOIN` e `WELCOME`
+
+Arquivo: [`evidence/snakenet-rede-real-join.pcapng`](../evidence/snakenet-rede-real-join.pcapng) — 1119 pacotes, **90 s**, 22/10/2026, `dumpcap` em `wlp4s0`
+no computador do servidor, filtro `udp port 5000`, 0 descartados pela interface. Mesmos endereços da §5: servidor `10.209.198.22:5000`, cliente remoto `10.209.198.154:36099`.
+
+| Item | Valor |
+|---|---|
+| Tipos de mensagem | `STATE` 721 · `INPUT` 286 · `PING` 53 · `PONG` 53 · `JOIN` 3 · `WELCOME` 3 |
+| `STATE` | `seq` 2714 → 3434: **0 faltando, 0 duplicados, crescente**; maior intervalo entre pacotes 0,126 s (8/s) |
+| `INPUT` | em pares com o mesmo `seq` (ex.: #3 e #4, `seq=493`, `dir=L`, mesmo instante) |
+| `JOIN` (C→S) | 3 pacotes, 34 B, todos de `10.209.198.154:36099` com `name:"zeninn"`, em t = 57,04 s, 59,14 s e 60,00 s |
+| `WELCOME` (S→C) | 3 pacotes, 98 B, **idênticos**: `pid:1`, `tok:075d4679e517c94b`, arena 60×40, `tick_rate:8.0`, `timeout:5.0` |
+
+O que isto mostra: **`JOIN` repetido é idempotente**. Os três `JOIN` vieram do mesmo endereço, e o servidor respondeu cada um com o **mesmo `pid` e o mesmo `tok`**, sem criar jogador duplicado.
+Os `JOIN` repetidos, em intervalos de ~2 s e ~1 s, parecem ter sido causados por reconexões manuais com a tecla `R` no cliente (é uma inferência: a captura não registra teclas).
+O `STATE` continuou sem lacunas durante e depois das reconexões.
+
+**Ainda não capturado em rede real:** `LEAVE` (nenhum cliente saiu com `Esc` durante a janela) e `ERROR`. Ambos estão na captura de loopback (§4).
+A ressalva da §5 continua valendo: a captura é do lado do servidor e não mede perda que ocorra depois que o pacote sai dele.
