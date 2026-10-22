@@ -221,11 +221,11 @@
     },
     {
       "key": "SN-22",
-      "title": "SN-22 Preencher os nomes dos integrantes no README",
+      "title": "SN-22 Definir o papel de cada integrante no README",
       "cycle": "C4",
       "state": "todo",
       "priority": "medium",
-      "description": "Os placeholders continuam.",
+      "description": "Nomes já preenchidos (Jeiel Santos, Maria Pereira); falta definir os papéis.",
       "needs_human": true
     },
     {

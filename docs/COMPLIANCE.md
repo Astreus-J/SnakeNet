@@ -11,7 +11,7 @@ Nada é marcado como totalmente atendido só porque existe um arquivo. Resultado
 | Justificativa TCP/UDP (1,5) | escolha de projeto (UDP) + camada de confiabilidade: números de sequência, retentativas, JOIN/LEAVE idempotentes | testes de JOIN duplicado, INPUT duplicado/fora de ordem, STATE antigo | README §3, PROTOCOL §6, PRESENTATION | ✅ | ✅ | ✅ | ⬜ | A equipe precisa saber defender oralmente |
 | Tratamento de erros (1,0) | validação em `protocol/`, `server/app.py`, `throttle.py`, `sessions.py`, máquina de estados do cliente | tráfego malformado, limites de taxa, expiração, servidor cheio, servidor indisponível, host não resolvido, perda→recuperação | README §6, PROTOCOL §4–5 | ✅ | ✅ | ✅ | ⬜ | Perda/latência não medidas em enlace real degradado |
 | Organização do código (0,5) | pacotes em camadas; os testes espelham os pacotes | — | ARCHITECTURE (tabela de camadas) | ✅ | n/a | ✅ | n/a | — |
-| Documentação (0,5) | README, PROTOCOL, ARCHITECTURE, WIRESHARK, PRESENTATION, PLAN, este arquivo | — | — | ✅ | n/a | 🟡 | n/a | Nomes da equipe são placeholders |
+| Documentação (0,5) | README, PROTOCOL, ARCHITECTURE, WIRESHARK, PRESENTATION, PLAN, este arquivo | — | — | ✅ | n/a | 🟡 | n/a | Papéis de cada integrante ainda a definir |
 | Apresentação (0,5) | plano em `docs/PRESENTATION.md` | — | ✅ | 🟡 | n/a | ✅ | ⬜ | Ensaio pendente |
 | Domínio conceitual (1,0) | Perguntas e respostas preparadas em PRESENTATION.md | — | ✅ | n/a | n/a | ✅ | ⬜ | Todos os integrantes precisam estudar |
 
@@ -19,7 +19,7 @@ Nada é marcado como totalmente atendido só porque existe um arquivo. Resultado
 | Entrega | Estado |
 |---|---|
 | 1. Código-fonte (cliente + servidor) | ✅ presente, testado |
-| 2. README com todos os itens exigidos (descrição, integrantes, arquitetura, TCP/UDP, justificativa, IP/porta, protocolo, mensagens, instruções de execução) | ✅ presente; **integrantes são placeholders** |
+| 2. README com todos os itens exigidos (descrição, integrantes, arquitetura, TCP/UDP, justificativa, IP/porta, protocolo, mensagens, instruções de execução) | ✅ presente; integrantes listados (papéis a definir) |
 | 3. Diagrama da arquitetura | ✅ [ARCHITECTURE.md](ARCHITECTURE.md) (Mermaid) |
 | 4. Captura de tráfego e análise no Wireshark | ⬜ **ainda não entregue** — procedimento e filtros prontos em [WIRESHARK.md](WIRESHARK.md); precisa ser capturada em uma máquina com permissão de captura |
 

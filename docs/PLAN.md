@@ -47,7 +47,7 @@ Prazo: **28/10/2026**. Fonte para sincronizar: [`project-management/plane/plan.j
 | SN-19 | Plano da apresentação e perguntas e respostas | ✅ feito |
 | SN-20 | Ensaiar a demonstração de 10 minutos; todos explicam o código | 🧍 pendente (precisa da equipe) |
 | SN-21 | Verificação final dos comandos documentados em venv limpo | ⬜ a fazer |
-| SN-22 | Preencher os nomes dos integrantes no README | 🧍 pendente (precisa da equipe) |
+| SN-22 | Definir o papel de cada integrante no README | 🧍 pendente (precisa da equipe) |
 | SN-23 | Opcional: boost, som, menu (só se todo o resto estiver pronto) | ⬜ a fazer |
 
 ## Trabalho restante (tudo depende da equipe)
