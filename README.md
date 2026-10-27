@@ -10,7 +10,6 @@ Trabalho de *Fundamentos de Redes de Computadores* — "Desenvolvimento de Aplic
 | Jeiel Santos | _[a definir]_ |
 | Maria Pereira | _[a definir]_ |
 | Josué Silva | _[a definir]_ |
-| Josue Klaysler | _[a definir]_ |
 
 ## 1. Problema e solução
 
